@@ -1,0 +1,1 @@
+timestamp_iso8601,condition,trial_id,elapsed_seconds,battery_percent,voltage_v,current_ma,device_temperature_c,ambient_temperature_c,cpu_usage_percent,gpu_usage_percent,screen_brightness_percent,network_state,notes

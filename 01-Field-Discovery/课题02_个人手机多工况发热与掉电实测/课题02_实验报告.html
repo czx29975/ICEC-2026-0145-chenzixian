@@ -1,0 +1,594 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>课题 02 个人手机多工况发热与掉电实测</title><style>
+* { box-sizing: border-box; }
+body { margin: 0 auto; padding: 46px 56px 60px; max-width: 1180px;
+  font-family: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", sans-serif;
+  color: #1e293b; background: #fff; line-height: 1.75; font-size: 14.5px; }
+h1 { font-size: 27px; margin: 0 0 6px; letter-spacing: .5px; }
+h1 .no { color: #dc2626; }
+.meta { color: #64748b; font-size: 13px; border-bottom: 2px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 26px; }
+h2 { font-size: 18px; margin: 38px 0 12px; padding-left: 11px; border-left: 4px solid #dc2626; }
+h3 { font-size: 15px; margin: 22px 0 8px; color: #0f172a; }
+p { margin: 8px 0; }
+ul, ol { margin: 8px 0 8px 4px; padding-left: 22px; }
+li { margin: 5px 0; }
+code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 13px;
+  font-family: Consolas, "Courier New", monospace; color: #0f172a; }
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 12.5px; }
+th, td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: center; }
+th { background: #f8fafc; font-weight: 600; color: #0f172a; }
+td.l { text-align: left; }
+tbody tr:nth-child(even) { background: #fcfdff; }
+.note { background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #d97706;
+  padding: 12px 16px; border-radius: 6px; margin: 18px 0; font-size: 13.5px; }
+.key { background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #dc2626;
+  padding: 12px 16px; border-radius: 6px; margin: 18px 0; font-size: 14px; }
+.good { background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a;
+  padding: 12px 16px; border-radius: 6px; margin: 18px 0; font-size: 14px; }
+figure { margin: 20px 0 26px; }
+figure svg { width: 100%; height: auto; display: block; border: 1px solid #e8edf4; border-radius: 8px; }
+figcaption { color: #64748b; font-size: 12.5px; margin-top: 8px; text-align: center; }
+.small { color: #64748b; font-size: 12.5px; }
+.tag { display: inline-block; padding: 0 7px; border-radius: 9px; font-size: 11.5px;
+  color: #fff; margin-right: 5px; }
+.c1 { background: #94a3b8; } .c2 { background: #2563eb; }
+.c3 { background: #d97706; } .c4 { background: #dc2626; }
+footer { margin-top: 44px; padding-top: 14px; border-top: 1px solid #e2e8f0;
+  color: #94a3b8; font-size: 12px; }
+@media print { body { padding: 0; font-size: 12px; }
+  h2 { page-break-after: avoid; } figure { page-break-inside: avoid; }
+  table { page-break-inside: avoid; } }
+</style></head><body>
+<h1><span class="no">课题 02</span>　个人手机多工况发热与掉电实测</h1>
+<div class="meta">4 种工况 × 30 min × 每 5 min 一段连续采样　｜　共 24 组时间序列、480 个采样点　｜　电池 4500 mAh / 3.87 V = 17.4 Wh　｜　室温 26 ℃　｜　报告日期 2026-11-18</div>
+<div class="note"><b>关于数据来源，先读这段：</b>本报告 <code>data/</code> 下的 24 份 CSV 由 <code>tb_sim.py</code> 依据手机功耗—电量—发热的物理模型<b>仿真生成</b>，用途是把"采集 → 指标 → 归因 → 策略"整条分析链跑通，并给出可复现的数值基线。<b>正式提交前请替换为真机实测数据</b>：用 AccuBattery / Scene / Sensor Log 等导出 CSV，按 <code>C1_standby_T1_00-05min.csv</code> 的命名与列顺序覆盖同名文件，重跑 <code>python run_all.py --real</code>，全文图表与结论会自动按你的实测数据重算。第 2 节即为可直接照做的测试方案。</div>
+<h2>1　实验目的</h2>
+<ol><li>在<b>同一台手机、同一室温</b>下，测出待机／短视频／导航拍摄／高帧率游戏 4 种工况的电量消耗曲线与温升曲线，量化"用得多狠"到底差多少倍；</li><li>把整机功耗<b>拆到硬件模块</b>（屏幕、SoC、射频、GPS、相机 ISP、存储等），定位每种场景真正的耗电大头；</li><li>基于归因结果给出<b>可量化</b>的系统省电策略，而不是"少玩手机"这种正确但无用的建议。</li></ol>
+<h2>2　测试方案</h2>
+<table><thead><tr><th style="width:96px">项目</th><th>设定</th><th style="width:35%">为什么这样定</th></tr></thead><tbody>
+<tr><td><b>被测设备</b></td><td class="l">4500 mAh / 3.87 V（约 17.4 Wh）的 5G 手机，关闭省电模式、关闭自动亮度</td><td class="l small">容量决定了 %/h 与 W 的换算关系，必须先记下来</td></tr>
+<tr><td><b>环境</b></td><td class="l">室内 26 ℃，无风、无阳光直射，手机平放桌面（不套壳）</td><td class="l small">热阻对气流极敏感，风一吹温升能差 5 ℃ 以上</td></tr>
+<tr><td><b>电量采集</b></td><td class="l">每 5 min 记录一次系统电量百分比；同时记录电压、电流（mA）</td><td class="l small">百分比只有 1% 粒度，必须配合电流才能算出真实功率</td></tr>
+<tr><td><b>温度采集</b></td><td class="l">机身背面中部、电池、CPU 三处：红外测温枪或机身温度传感器 + 系统内核读数</td><td class="l small">表面温反映手感，电池温决定老化与降频，CPU 温决定性能</td></tr>
+<tr><td><b>时间轴</b></td><td class="l">每种工况连续 30 min，前 3 min 为进入稳态前的过渡段（保留但不参与稳态拟合）</td><td class="l small">30 min 足以覆盖一阶热过程（τ≈6~8 min）的 95%</td></tr>
+<tr><td><b>顺序</b></td><td class="l">每种工况前静置 15 min 回到室温，工况之间不连续叠加</td><td class="l small">否则残余热量会污染下一个工况的初始温度</td></tr>
+<tr><td><b>记录方式</b></td><td class="l">每 15 s 自动记一条，5 min 导出为一个 CSV，共 6 段 × 4 工况 = 24 组</td><td class="l small">既是「每 5 分钟一个记录点」，又保留了段内的抖动信息</td></tr>
+</tbody></table>
+<h3>2.1　四种工况的精确定义</h3>
+<table><thead><tr><th style="width:52px">编号</th><th style="width:150px">工况</th><th>执行内容（务必逐条复现）</th></tr></thead><tbody>
+<tr><td><span class="tag c1">C1</span></td><td><b>待机（息屏）</b></td><td class="l">屏幕熄灭、锁屏放置桌面；蜂窝待机 + Wi-Fi 连接；后台同步、推送保持默认开启。不充电、不插耳机。</td></tr>
+<tr><td><span class="tag c2">C2</span></td><td><b>短视频</b></td><td class="l">Wi-Fi 下连续刷竖屏短视频（1080p 自动码率），亮度 50%、60 Hz，音量 30%。不点赞不评论，保持连续播放。</td></tr>
+<tr><td><span class="tag c3">C3</span></td><td><b>导航 / 拍摄</b></td><td class="l">前 15 min：5G 数据 + GPS 导航（屏幕常亮 80%、路线实时刷新）；后 15 min：4K/60 fps 连续录像（手持，边走边拍，开启防抖）。</td></tr>
+<tr><td><span class="tag c4">C4</span></td><td><b>高帧率游戏</b></td><td class="l">120 fps 模式的 3D 手游，画质设为「高」，亮度 80%，Wi-Fi 联网，振动反馈开启，连续对战 30 min。</td></tr>
+</tbody></table>
+<h2>3　数据说明</h2>
+<p>24 组时间序列按 <code>工况_场景_T段_时间段.csv</code> 命名，例如 <code>C4_game_T3_10-15min.csv</code> 表示"高帧率游戏、第 3 段（10–15 min）"。每组含 20 条采样（15 s 间隔 × 5 min），列定义如下：</p>
+<table><thead><tr><th style="width:150px">列名</th><th style="width:90px">单位</th><th>含义与用途</th></tr></thead><tbody>
+<tr><td class="l"><b>时间(min) / 时刻</b></td><td>min / —</td><td class="l small">相对起始与绝对时钟，用于跨工况对齐</td></tr>
+<tr><td class="l"><b>电量(%)</b></td><td>%</td><td class="l small">系统上报值，1% 粒度 → 曲线呈阶梯状</td></tr>
+<tr><td class="l"><b>电压(V) / 电流(mA)</b></td><td>V / mA</td><td class="l small">两者相乘即功率；电压还反映电池内阻引起的负载压降</td></tr>
+<tr><td class="l"><b>功率(W)</b></td><td>W</td><td class="l small">本报告一切分析的核心量纲</td></tr>
+<tr><td class="l"><b>电池温度 / 机身表面温度 / CPU温度</b></td><td>℃</td><td class="l small">分别对应老化风险、手感、性能调度三条线</td></tr>
+<tr><td class="l"><b>CPU占用 / GPU占用</b></td><td>%</td><td class="l small">解释功率波动，也是「是否降频」的旁证</td></tr>
+<tr><td class="l"><b>屏幕亮度 / 刷新率 / 网络</b></td><td>%, Hz, —</td><td class="l small">每个工况的固定条件，换条件阈值就不适用</td></tr>
+</tbody></table>
+<h3>3.1　24 组时段汇总（完整时序见各 CSV）</h3>
+<table><thead><tr><th style="width:56px">组号</th><th style="width:126px">工况</th><th style="width:86px">时段 (min)</th><th>平均功率</th><th>掉电</th><th>表面温度 起→止</th><th>温升</th><th>末段 CPU</th></tr></thead><tbody>
+<tr><td>G01</td><td class="l"><span class="tag c1">C1</span>待机（息屏）</td><td>0–5</td><td>0.40 W</td><td>1%</td><td>26.0 → 26.5 ℃</td><td>+0.5 ℃</td><td>32 ℃</td></tr>
+<tr><td>G02</td><td class="l"><span class="tag c1">C1</span>待机（息屏）</td><td>5–10</td><td>0.40 W</td><td>0%</td><td>26.5 → 26.7 ℃</td><td>+0.1 ℃</td><td>33 ℃</td></tr>
+<tr><td>G03</td><td class="l"><span class="tag c1">C1</span>待机（息屏）</td><td>10–15</td><td>0.40 W</td><td>0%</td><td>26.6 → 26.9 ℃</td><td>+0.2 ℃</td><td>34 ℃</td></tr>
+<tr><td>G04</td><td class="l"><span class="tag c1">C1</span>待机（息屏）</td><td>15–20</td><td>0.40 W</td><td>0%</td><td>26.9 → 27.0 ℃</td><td>+0.1 ℃</td><td>34 ℃</td></tr>
+<tr><td>G05</td><td class="l"><span class="tag c1">C1</span>待机（息屏）</td><td>20–25</td><td>0.39 W</td><td>0%</td><td>27.0 → 26.9 ℃</td><td>-0.1 ℃</td><td>34 ℃</td></tr>
+<tr><td>G06</td><td class="l"><span class="tag c1">C1</span>待机（息屏）</td><td>25–30</td><td>0.39 W</td><td>1%</td><td>26.8 → 26.8 ℃</td><td>+0.0 ℃</td><td>34 ℃</td></tr>
+<tr><td>G07</td><td class="l"><span class="tag c2">C2</span>短视频</td><td>0–5</td><td>2.46 W</td><td>2%</td><td>26.0 → 29.1 ℃</td><td>+3.1 ℃</td><td>42 ℃</td></tr>
+<tr><td>G08</td><td class="l"><span class="tag c2">C2</span>短视频</td><td>5–10</td><td>2.49 W</td><td>1%</td><td>29.3 → 30.9 ℃</td><td>+1.7 ℃</td><td>47 ℃</td></tr>
+<tr><td>G09</td><td class="l"><span class="tag c2">C2</span>短视频</td><td>10–15</td><td>2.46 W</td><td>1%</td><td>31.0 → 31.6 ℃</td><td>+0.6 ℃</td><td>49 ℃</td></tr>
+<tr><td>G10</td><td class="l"><span class="tag c2">C2</span>短视频</td><td>15–20</td><td>2.46 W</td><td>1%</td><td>31.6 → 32.0 ℃</td><td>+0.4 ℃</td><td>49 ℃</td></tr>
+<tr><td>G11</td><td class="l"><span class="tag c2">C2</span>短视频</td><td>20–25</td><td>2.46 W</td><td>1%</td><td>32.0 → 32.2 ℃</td><td>+0.2 ℃</td><td>49 ℃</td></tr>
+<tr><td>G12</td><td class="l"><span class="tag c2">C2</span>短视频</td><td>25–30</td><td>2.46 W</td><td>2%</td><td>32.3 → 32.3 ℃</td><td>+0.0 ℃</td><td>49 ℃</td></tr>
+<tr><td>G13</td><td class="l"><span class="tag c3">C3</span>导航 / 拍摄</td><td>0–5</td><td>5.31 W</td><td>3%</td><td>26.0 → 31.8 ℃</td><td>+5.8 ℃</td><td>48 ℃</td></tr>
+<tr><td>G14</td><td class="l"><span class="tag c3">C3</span>导航 / 拍摄</td><td>5–10</td><td>5.35 W</td><td>2%</td><td>32.0 → 35.1 ℃</td><td>+3.1 ℃</td><td>57 ℃</td></tr>
+<tr><td>G15</td><td class="l"><span class="tag c3">C3</span>导航 / 拍摄</td><td>10–15</td><td>5.32 W</td><td>2%</td><td>35.2 → 37.2 ℃</td><td>+1.9 ℃</td><td>60 ℃</td></tr>
+<tr><td>G16</td><td class="l"><span class="tag c3">C3</span>导航 / 拍摄</td><td>15–20</td><td>5.28 W</td><td>3%</td><td>37.2 → 38.1 ℃</td><td>+0.9 ℃</td><td>61 ℃</td></tr>
+<tr><td>G17</td><td class="l"><span class="tag c3">C3</span>导航 / 拍摄</td><td>20–25</td><td>5.16 W</td><td>2%</td><td>38.2 → 38.7 ℃</td><td>+0.5 ℃</td><td>60 ℃</td></tr>
+<tr><td>G18</td><td class="l"><span class="tag c3">C3</span>导航 / 拍摄</td><td>25–30</td><td>5.11 W</td><td>2%</td><td>38.6 → 38.9 ℃</td><td>+0.3 ℃</td><td>60 ℃</td></tr>
+<tr><td>G19</td><td class="l"><span class="tag c4">C4</span>高帧率游戏（120 fps）</td><td>0–5</td><td>7.28 W</td><td>4%</td><td>26.0 → 32.7 ℃</td><td>+6.7 ℃</td><td>54 ℃</td></tr>
+<tr><td>G20</td><td class="l"><span class="tag c4">C4</span>高帧率游戏（120 fps）</td><td>5–10</td><td>7.24 W</td><td>3%</td><td>33.0 → 37.4 ℃</td><td>+4.4 ℃</td><td>68 ℃</td></tr>
+<tr><td>G21</td><td class="l"><span class="tag c4">C4</span>高帧率游戏（120 fps）</td><td>10–15</td><td>7.13 W</td><td>4%</td><td>37.6 → 39.8 ℃</td><td>+2.2 ℃</td><td>72 ℃</td></tr>
+<tr><td>G22</td><td class="l"><span class="tag c4">C4</span>高帧率游戏（120 fps）</td><td>15–20</td><td>6.70 W</td><td>3%</td><td>39.8 → 40.4 ℃</td><td>+0.5 ℃</td><td>70 ℃</td></tr>
+<tr><td>G23</td><td class="l"><span class="tag c4">C4</span>高帧率游戏（120 fps）</td><td>20–25</td><td>6.31 W</td><td>3%</td><td>40.4 → 41.0 ℃</td><td>+0.6 ℃</td><td>70 ℃</td></tr>
+<tr><td>G24</td><td class="l"><span class="tag c4">C4</span>高帧率游戏（120 fps）</td><td>25–30</td><td>6.25 W</td><td>3%</td><td>41.0 → 41.5 ℃</td><td>+0.5 ℃</td><td>71 ℃</td></tr>
+</tbody></table>
+<p class="small">把 24 行竖着看是"一种工况的 30 分钟"，横着看是"同一时刻四种工况的差距"：同样 5 分钟，待机掉 0~1%、游戏掉 3~4%；温升差得更明显，第 6 段时待机仍在 26.8 ℃，游戏已经到 41 ℃。</p>
+<h2>4　掉电结果</h2>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="600" viewBox="0 0 1180 600">
+<rect width="1180" height="600" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">30 分钟掉电实测：4 种工况的电量曲线与续航外推</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">实线为手机上报的整数电量（阶梯即 1% 的显示粒度），圆点为每 5 分钟的记录点</text>
+<line x1="100.00" y1="108.00" x2="100.00" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="186.67" y1="108.00" x2="186.67" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="273.33" y1="108.00" x2="273.33" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="360.00" y1="108.00" x2="360.00" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="446.67" y1="108.00" x2="446.67" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="533.33" y1="108.00" x2="533.33" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="620.00" y1="108.00" x2="620.00" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="488.00" x2="620.00" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="426.71" x2="620.00" y2="426.71" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="365.42" x2="620.00" y2="365.42" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="304.13" x2="620.00" y2="304.13" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="242.84" x2="620.00" y2="242.84" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="181.55" x2="620.00" y2="181.55" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="120.26" x2="620.00" y2="120.26" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="100.00" y="108.00" width="520.00" height="380.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="100.00" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0</text>
+<text x="186.67" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">5</text>
+<text x="273.33" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">10</text>
+<text x="360.00" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">15</text>
+<text x="446.67" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">20</text>
+<text x="533.33" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">25</text>
+<text x="620.00" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">30</text>
+<text x="92.00" y="492.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">70</text>
+<text x="92.00" y="430.71" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">75</text>
+<text x="92.00" y="369.42" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">80</text>
+<text x="92.00" y="308.13" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">85</text>
+<text x="92.00" y="246.84" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">90</text>
+<text x="92.00" y="185.55" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">95</text>
+<text x="92.00" y="124.26" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">100</text>
+<text x="360.00" y="522.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal">时间 t / min</text>
+<text x="54.00" y="298.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 54.00 298.00)">剩余电量 / %</text>
+<text x="100.00" y="98.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(a) 电量—时间曲线</text>
+<polyline points="100.00,120.26 104.33,120.26 104.33,132.52 108.67,132.52 108.67,132.52 113.00,132.52 113.00,132.52 117.33,132.52 117.33,132.52 121.67,132.52 121.67,132.52 126.00,132.52 126.00,132.52 130.33,132.52 130.33,132.52 134.67,132.52 134.67,132.52 139.00,132.52 139.00,132.52 143.33,132.52 143.33,132.52 147.67,132.52 147.67,132.52 152.00,132.52 152.00,132.52 156.33,132.52 156.33,132.52 160.67,132.52 160.67,132.52 165.00,132.52 165.00,132.52 169.33,132.52 169.33,132.52 173.67,132.52 173.67,132.52 178.00,132.52 178.00,132.52 182.33,132.52 182.33,132.52 186.67,132.52 186.67,132.52 191.00,132.52 191.00,132.52 195.33,132.52 195.33,132.52 199.67,132.52 199.67,132.52 204.00,132.52 204.00,132.52 208.33,132.52 208.33,132.52 212.67,132.52 212.67,132.52 217.00,132.52 217.00,132.52 221.33,132.52 221.33,132.52 225.67,132.52 225.67,132.52 230.00,132.52 230.00,132.52 234.33,132.52 234.33,132.52 238.67,132.52 238.67,132.52 243.00,132.52 243.00,132.52 247.33,132.52 247.33,132.52 251.67,132.52 251.67,132.52 256.00,132.52 256.00,132.52 260.33,132.52 260.33,132.52 264.67,132.52 264.67,132.52 269.00,132.52 269.00,132.52 273.33,132.52 273.33,132.52 277.67,132.52 277.67,132.52 282.00,132.52 282.00,132.52 286.33,132.52 286.33,132.52 290.67,132.52 290.67,132.52 295.00,132.52 295.00,132.52 299.33,132.52 299.33,132.52 303.67,132.52 303.67,132.52 308.00,132.52 308.00,132.52 312.33,132.52 312.33,132.52 316.67,132.52 316.67,132.52 321.00,132.52 321.00,132.52 325.33,132.52 325.33,132.52 329.67,132.52 329.67,132.52 334.00,132.52 334.00,132.52 338.33,132.52 338.33,132.52 342.67,132.52 342.67,132.52 347.00,132.52 347.00,132.52 351.33,132.52 351.33,132.52 355.67,132.52 355.67,132.52 360.00,132.52 360.00,132.52 364.33,132.52 364.33,132.52 368.67,132.52 368.67,132.52 373.00,132.52 373.00,132.52 377.33,132.52 377.33,132.52 381.67,132.52 381.67,132.52 386.00,132.52 386.00,132.52 390.33,132.52 390.33,132.52 394.67,132.52 394.67,132.52 399.00,132.52 399.00,132.52 403.33,132.52 403.33,132.52 407.67,132.52 407.67,132.52 412.00,132.52 412.00,132.52 416.33,132.52 416.33,132.52 420.67,132.52 420.67,132.52 425.00,132.52 425.00,132.52 429.33,132.52 429.33,132.52 433.67,132.52 433.67,132.52 438.00,132.52 438.00,132.52 442.33,132.52 442.33,132.52 446.67,132.52 446.67,132.52 451.00,132.52 451.00,132.52 455.33,132.52 455.33,132.52 459.67,132.52 459.67,132.52 464.00,132.52 464.00,132.52 468.33,132.52 468.33,132.52 472.67,132.52 472.67,132.52 477.00,132.52 477.00,132.52 481.33,132.52 481.33,132.52 485.67,132.52 485.67,132.52 490.00,132.52 490.00,132.52 494.33,132.52 494.33,132.52 498.67,132.52 498.67,132.52 503.00,132.52 503.00,132.52 507.33,132.52 507.33,132.52 511.67,132.52 511.67,132.52 516.00,132.52 516.00,132.52 520.33,132.52 520.33,132.52 524.67,132.52 524.67,132.52 529.00,132.52 529.00,132.52 533.33,132.52 533.33,132.52 537.67,132.52 537.67,132.52 542.00,132.52 542.00,132.52 546.33,132.52 546.33,132.52 550.67,132.52 550.67,132.52 555.00,132.52 555.00,132.52 559.33,132.52 559.33,144.77 563.67,144.77 563.67,144.77 568.00,144.77 568.00,144.77 572.33,144.77 572.33,144.77 576.67,144.77 576.67,144.77 581.00,144.77 581.00,144.77 585.33,144.77 585.33,144.77 589.67,144.77 589.67,144.77 594.00,144.77 594.00,144.77 598.33,144.77 598.33,144.77 602.67,144.77 602.67,144.77 607.00,144.77 607.00,144.77 611.33,144.77 611.33,144.77 615.67,144.77 615.67,144.77" fill="none" stroke="#94a3b8" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="100.00" cy="120.26" r="3.2" fill="#94a3b8" stroke="none" stroke-width="1"/>
+<circle cx="186.67" cy="132.52" r="3.2" fill="#94a3b8" stroke="none" stroke-width="1"/>
+<circle cx="273.33" cy="132.52" r="3.2" fill="#94a3b8" stroke="none" stroke-width="1"/>
+<circle cx="360.00" cy="132.52" r="3.2" fill="#94a3b8" stroke="none" stroke-width="1"/>
+<circle cx="446.67" cy="132.52" r="3.2" fill="#94a3b8" stroke="none" stroke-width="1"/>
+<circle cx="533.33" cy="132.52" r="3.2" fill="#94a3b8" stroke="none" stroke-width="1"/>
+<circle cx="615.67" cy="144.77" r="3.2" fill="#94a3b8" stroke="none" stroke-width="1"/>
+<text x="626.00" y="148.77" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#94a3b8" text-anchor="start" font-weight="bold">98%</text>
+<polyline points="100.00,120.26 104.33,120.26 104.33,132.52 108.67,132.52 108.67,132.52 113.00,132.52 113.00,132.52 117.33,132.52 117.33,132.52 121.67,132.52 121.67,132.52 126.00,132.52 126.00,132.52 130.33,132.52 130.33,132.52 134.67,132.52 134.67,132.52 139.00,132.52 139.00,132.52 143.33,132.52 143.33,132.52 147.67,132.52 147.67,132.52 152.00,132.52 152.00,132.52 156.33,132.52 156.33,132.52 160.67,132.52 160.67,132.52 165.00,132.52 165.00,132.52 169.33,132.52 169.33,132.52 173.67,132.52 173.67,144.77 178.00,144.77 178.00,144.77 182.33,144.77 182.33,144.77 186.67,144.77 186.67,144.77 191.00,144.77 191.00,144.77 195.33,144.77 195.33,144.77 199.67,144.77 199.67,144.77 204.00,144.77 204.00,144.77 208.33,144.77 208.33,144.77 212.67,144.77 212.67,144.77 217.00,144.77 217.00,144.77 221.33,144.77 221.33,144.77 225.67,144.77 225.67,144.77 230.00,144.77 230.00,144.77 234.33,144.77 234.33,144.77 238.67,144.77 238.67,144.77 243.00,144.77 243.00,144.77 247.33,144.77 247.33,157.03 251.67,157.03 251.67,157.03 256.00,157.03 256.00,157.03 260.33,157.03 260.33,157.03 264.67,157.03 264.67,157.03 269.00,157.03 269.00,157.03 273.33,157.03 273.33,157.03 277.67,157.03 277.67,157.03 282.00,157.03 282.00,157.03 286.33,157.03 286.33,157.03 290.67,157.03 290.67,157.03 295.00,157.03 295.00,157.03 299.33,157.03 299.33,157.03 303.67,157.03 303.67,157.03 308.00,157.03 308.00,157.03 312.33,157.03 312.33,157.03 316.67,157.03 316.67,157.03 321.00,157.03 321.00,169.29 325.33,169.29 325.33,169.29 329.67,169.29 329.67,169.29 334.00,169.29 334.00,169.29 338.33,169.29 338.33,169.29 342.67,169.29 342.67,169.29 347.00,169.29 347.00,169.29 351.33,169.29 351.33,169.29 355.67,169.29 355.67,169.29 360.00,169.29 360.00,169.29 364.33,169.29 364.33,169.29 368.67,169.29 368.67,169.29 373.00,169.29 373.00,169.29 377.33,169.29 377.33,169.29 381.67,169.29 381.67,169.29 386.00,169.29 386.00,169.29 390.33,169.29 390.33,169.29 394.67,169.29 394.67,181.55 399.00,181.55 399.00,181.55 403.33,181.55 403.33,181.55 407.67,181.55 407.67,181.55 412.00,181.55 412.00,181.55 416.33,181.55 416.33,181.55 420.67,181.55 420.67,181.55 425.00,181.55 425.00,181.55 429.33,181.55 429.33,181.55 433.67,181.55 433.67,181.55 438.00,181.55 438.00,181.55 442.33,181.55 442.33,181.55 446.67,181.55 446.67,181.55 451.00,181.55 451.00,181.55 455.33,181.55 455.33,181.55 459.67,181.55 459.67,181.55 464.00,181.55 464.00,181.55 468.33,181.55 468.33,193.81 472.67,193.81 472.67,193.81 477.00,193.81 477.00,193.81 481.33,193.81 481.33,193.81 485.67,193.81 485.67,193.81 490.00,193.81 490.00,193.81 494.33,193.81 494.33,193.81 498.67,193.81 498.67,193.81 503.00,193.81 503.00,193.81 507.33,193.81 507.33,193.81 511.67,193.81 511.67,193.81 516.00,193.81 516.00,193.81 520.33,193.81 520.33,193.81 524.67,193.81 524.67,193.81 529.00,193.81 529.00,193.81 533.33,193.81 533.33,193.81 537.67,193.81 537.67,193.81 542.00,193.81 542.00,206.06 546.33,206.06 546.33,206.06 550.67,206.06 550.67,206.06 555.00,206.06 555.00,206.06 559.33,206.06 559.33,206.06 563.67,206.06 563.67,206.06 568.00,206.06 568.00,206.06 572.33,206.06 572.33,206.06 576.67,206.06 576.67,206.06 581.00,206.06 581.00,206.06 585.33,206.06 585.33,206.06 589.67,206.06 589.67,206.06 594.00,206.06 594.00,206.06 598.33,206.06 598.33,206.06 602.67,206.06 602.67,206.06 607.00,206.06 607.00,206.06 611.33,206.06 611.33,206.06 615.67,206.06 615.67,218.32" fill="none" stroke="#2563eb" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="100.00" cy="120.26" r="3.2" fill="#2563eb" stroke="none" stroke-width="1"/>
+<circle cx="186.67" cy="144.77" r="3.2" fill="#2563eb" stroke="none" stroke-width="1"/>
+<circle cx="273.33" cy="157.03" r="3.2" fill="#2563eb" stroke="none" stroke-width="1"/>
+<circle cx="360.00" cy="169.29" r="3.2" fill="#2563eb" stroke="none" stroke-width="1"/>
+<circle cx="446.67" cy="181.55" r="3.2" fill="#2563eb" stroke="none" stroke-width="1"/>
+<circle cx="533.33" cy="193.81" r="3.2" fill="#2563eb" stroke="none" stroke-width="1"/>
+<circle cx="615.67" cy="218.32" r="3.2" fill="#2563eb" stroke="none" stroke-width="1"/>
+<text x="626.00" y="222.32" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#2563eb" text-anchor="start" font-weight="bold">92%</text>
+<polyline points="100.00,120.26 104.33,120.26 104.33,132.52 108.67,132.52 108.67,132.52 113.00,132.52 113.00,132.52 117.33,132.52 117.33,132.52 121.67,132.52 121.67,132.52 126.00,132.52 126.00,132.52 130.33,132.52 130.33,132.52 134.67,132.52 134.67,144.77 139.00,144.77 139.00,144.77 143.33,144.77 143.33,144.77 147.67,144.77 147.67,144.77 152.00,144.77 152.00,144.77 156.33,144.77 156.33,144.77 160.67,144.77 160.67,144.77 165.00,144.77 165.00,144.77 169.33,144.77 169.33,157.03 173.67,157.03 173.67,157.03 178.00,157.03 178.00,157.03 182.33,157.03 182.33,157.03 186.67,157.03 186.67,157.03 191.00,157.03 191.00,157.03 195.33,157.03 195.33,157.03 199.67,157.03 199.67,157.03 204.00,157.03 204.00,169.29 208.33,169.29 208.33,169.29 212.67,169.29 212.67,169.29 217.00,169.29 217.00,169.29 221.33,169.29 221.33,169.29 225.67,169.29 225.67,169.29 230.00,169.29 230.00,169.29 234.33,169.29 234.33,169.29 238.67,169.29 238.67,181.55 243.00,181.55 243.00,181.55 247.33,181.55 247.33,181.55 251.67,181.55 251.67,181.55 256.00,181.55 256.00,181.55 260.33,181.55 260.33,181.55 264.67,181.55 264.67,181.55 269.00,181.55 269.00,181.55 273.33,181.55 273.33,193.81 277.67,193.81 277.67,193.81 282.00,193.81 282.00,193.81 286.33,193.81 286.33,193.81 290.67,193.81 290.67,193.81 295.00,193.81 295.00,193.81 299.33,193.81 299.33,193.81 303.67,193.81 303.67,193.81 308.00,193.81 308.00,206.06 312.33,206.06 312.33,206.06 316.67,206.06 316.67,206.06 321.00,206.06 321.00,206.06 325.33,206.06 325.33,206.06 329.67,206.06 329.67,206.06 334.00,206.06 334.00,206.06 338.33,206.06 338.33,218.32 342.67,218.32 342.67,218.32 347.00,218.32 347.00,218.32 351.33,218.32 351.33,218.32 355.67,218.32 355.67,218.32 360.00,218.32 360.00,218.32 364.33,218.32 364.33,218.32 368.67,218.32 368.67,218.32 373.00,218.32 373.00,230.58 377.33,230.58 377.33,230.58 381.67,230.58 381.67,230.58 386.00,230.58 386.00,230.58 390.33,230.58 390.33,230.58 394.67,230.58 394.67,230.58 399.00,230.58 399.00,230.58 403.33,230.58 403.33,230.58 407.67,230.58 407.67,242.84 412.00,242.84 412.00,242.84 416.33,242.84 416.33,242.84 420.67,242.84 420.67,242.84 425.00,242.84 425.00,242.84 429.33,242.84 429.33,242.84 433.67,242.84 433.67,242.84 438.00,242.84 438.00,242.84 442.33,242.84 442.33,255.10 446.67,255.10 446.67,255.10 451.00,255.10 451.00,255.10 455.33,255.10 455.33,255.10 459.67,255.10 459.67,255.10 464.00,255.10 464.00,255.10 468.33,255.10 468.33,255.10 472.67,255.10 472.67,255.10 477.00,255.10 477.00,267.35 481.33,267.35 481.33,267.35 485.67,267.35 485.67,267.35 490.00,267.35 490.00,267.35 494.33,267.35 494.33,267.35 498.67,267.35 498.67,267.35 503.00,267.35 503.00,267.35 507.33,267.35 507.33,267.35 511.67,267.35 511.67,279.61 516.00,279.61 516.00,279.61 520.33,279.61 520.33,279.61 524.67,279.61 524.67,279.61 529.00,279.61 529.00,279.61 533.33,279.61 533.33,279.61 537.67,279.61 537.67,279.61 542.00,279.61 542.00,279.61 546.33,279.61 546.33,291.87 550.67,291.87 550.67,291.87 555.00,291.87 555.00,291.87 559.33,291.87 559.33,291.87 563.67,291.87 563.67,291.87 568.00,291.87 568.00,291.87 572.33,291.87 572.33,291.87 576.67,291.87 576.67,291.87 581.00,291.87 581.00,291.87 585.33,291.87 585.33,304.13 589.67,304.13 589.67,304.13 594.00,304.13 594.00,304.13 598.33,304.13 598.33,304.13 602.67,304.13 602.67,304.13 607.00,304.13 607.00,304.13 611.33,304.13 611.33,304.13 615.67,304.13 615.67,304.13" fill="none" stroke="#d97706" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="100.00" cy="120.26" r="3.2" fill="#d97706" stroke="none" stroke-width="1"/>
+<circle cx="186.67" cy="157.03" r="3.2" fill="#d97706" stroke="none" stroke-width="1"/>
+<circle cx="273.33" cy="193.81" r="3.2" fill="#d97706" stroke="none" stroke-width="1"/>
+<circle cx="360.00" cy="218.32" r="3.2" fill="#d97706" stroke="none" stroke-width="1"/>
+<circle cx="446.67" cy="255.10" r="3.2" fill="#d97706" stroke="none" stroke-width="1"/>
+<circle cx="533.33" cy="279.61" r="3.2" fill="#d97706" stroke="none" stroke-width="1"/>
+<circle cx="615.67" cy="304.13" r="3.2" fill="#d97706" stroke="none" stroke-width="1"/>
+<text x="626.00" y="308.13" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#d97706" text-anchor="start" font-weight="bold">85%</text>
+<polyline points="100.00,120.26 104.33,120.26 104.33,132.52 108.67,132.52 108.67,132.52 113.00,132.52 113.00,132.52 117.33,132.52 117.33,132.52 121.67,132.52 121.67,132.52 126.00,132.52 126.00,144.77 130.33,144.77 130.33,144.77 134.67,144.77 134.67,144.77 139.00,144.77 139.00,144.77 143.33,144.77 143.33,144.77 147.67,144.77 147.67,144.77 152.00,144.77 152.00,157.03 156.33,157.03 156.33,157.03 160.67,157.03 160.67,157.03 165.00,157.03 165.00,157.03 169.33,157.03 169.33,157.03 173.67,157.03 173.67,157.03 178.00,157.03 178.00,169.29 182.33,169.29 182.33,169.29 186.67,169.29 186.67,169.29 191.00,169.29 191.00,169.29 195.33,169.29 195.33,169.29 199.67,169.29 199.67,181.55 204.00,181.55 204.00,181.55 208.33,181.55 208.33,181.55 212.67,181.55 212.67,181.55 217.00,181.55 217.00,181.55 221.33,181.55 221.33,181.55 225.67,181.55 225.67,193.81 230.00,193.81 230.00,193.81 234.33,193.81 234.33,193.81 238.67,193.81 238.67,193.81 243.00,193.81 243.00,193.81 247.33,193.81 247.33,193.81 251.67,193.81 251.67,206.06 256.00,206.06 256.00,206.06 260.33,206.06 260.33,206.06 264.67,206.06 264.67,206.06 269.00,206.06 269.00,206.06 273.33,206.06 273.33,206.06 277.67,206.06 277.67,218.32 282.00,218.32 282.00,218.32 286.33,218.32 286.33,218.32 290.67,218.32 290.67,218.32 295.00,218.32 295.00,218.32 299.33,218.32 299.33,218.32 303.67,218.32 303.67,230.58 308.00,230.58 308.00,230.58 312.33,230.58 312.33,230.58 316.67,230.58 316.67,230.58 321.00,230.58 321.00,230.58 325.33,230.58 325.33,242.84 329.67,242.84 329.67,242.84 334.00,242.84 334.00,242.84 338.33,242.84 338.33,242.84 342.67,242.84 342.67,242.84 347.00,242.84 347.00,242.84 351.33,242.84 351.33,255.10 355.67,255.10 355.67,255.10 360.00,255.10 360.00,255.10 364.33,255.10 364.33,255.10 368.67,255.10 368.67,255.10 373.00,255.10 373.00,255.10 377.33,255.10 377.33,267.35 381.67,267.35 381.67,267.35 386.00,267.35 386.00,267.35 390.33,267.35 390.33,267.35 394.67,267.35 394.67,267.35 399.00,267.35 399.00,267.35 403.33,267.35 403.33,267.35 407.67,267.35 407.67,279.61 412.00,279.61 412.00,279.61 416.33,279.61 416.33,279.61 420.67,279.61 420.67,279.61 425.00,279.61 425.00,279.61 429.33,279.61 429.33,279.61 433.67,279.61 433.67,291.87 438.00,291.87 438.00,291.87 442.33,291.87 442.33,291.87 446.67,291.87 446.67,291.87 451.00,291.87 451.00,291.87 455.33,291.87 455.33,291.87 459.67,291.87 459.67,304.13 464.00,304.13 464.00,304.13 468.33,304.13 468.33,304.13 472.67,304.13 472.67,304.13 477.00,304.13 477.00,304.13 481.33,304.13 481.33,304.13 485.67,304.13 485.67,304.13 490.00,304.13 490.00,316.39 494.33,316.39 494.33,316.39 498.67,316.39 498.67,316.39 503.00,316.39 503.00,316.39 507.33,316.39 507.33,316.39 511.67,316.39 511.67,316.39 516.00,316.39 516.00,316.39 520.33,316.39 520.33,328.65 524.67,328.65 524.67,328.65 529.00,328.65 529.00,328.65 533.33,328.65 533.33,328.65 537.67,328.65 537.67,328.65 542.00,328.65 542.00,328.65 546.33,328.65 546.33,340.90 550.67,340.90 550.67,340.90 555.00,340.90 555.00,340.90 559.33,340.90 559.33,340.90 563.67,340.90 563.67,340.90 568.00,340.90 568.00,340.90 572.33,340.90 572.33,340.90 576.67,340.90 576.67,353.16 581.00,353.16 581.00,353.16 585.33,353.16 585.33,353.16 589.67,353.16 589.67,353.16 594.00,353.16 594.00,353.16 598.33,353.16 598.33,353.16 602.67,353.16 602.67,353.16 607.00,353.16 607.00,365.42 611.33,365.42 611.33,365.42 615.67,365.42 615.67,365.42" fill="none" stroke="#dc2626" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="100.00" cy="120.26" r="3.2" fill="#dc2626" stroke="none" stroke-width="1"/>
+<circle cx="186.67" cy="169.29" r="3.2" fill="#dc2626" stroke="none" stroke-width="1"/>
+<circle cx="273.33" cy="206.06" r="3.2" fill="#dc2626" stroke="none" stroke-width="1"/>
+<circle cx="360.00" cy="255.10" r="3.2" fill="#dc2626" stroke="none" stroke-width="1"/>
+<circle cx="446.67" cy="291.87" r="3.2" fill="#dc2626" stroke="none" stroke-width="1"/>
+<circle cx="533.33" cy="328.65" r="3.2" fill="#dc2626" stroke="none" stroke-width="1"/>
+<circle cx="615.67" cy="365.42" r="3.2" fill="#dc2626" stroke="none" stroke-width="1"/>
+<text x="626.00" y="369.42" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#dc2626" text-anchor="start" font-weight="bold">80%</text>
+<line x1="730.00" y1="488.00" x2="1110.00" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="730.00" y1="414.92" x2="1110.00" y2="414.92" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="730.00" y1="341.85" x2="1110.00" y2="341.85" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="730.00" y1="268.77" x2="1110.00" y2="268.77" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="730.00" y1="195.69" x2="1110.00" y2="195.69" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="730.00" y1="122.62" x2="1110.00" y2="122.62" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="730.00" y="108.00" width="380.00" height="380.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="722.00" y="492.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">0</text>
+<text x="722.00" y="418.92" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">5</text>
+<text x="722.00" y="345.85" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">10</text>
+<text x="722.00" y="272.77" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">15</text>
+<text x="722.00" y="199.69" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">20</text>
+<text x="722.00" y="126.62" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">25</text>
+<text x="684.00" y="298.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 684.00 298.00)">30 min 掉电 / %</text>
+<text x="730.00" y="98.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(b) 掉电速度与续航外推</text>
+<rect x="752.80" y="458.77" width="49.40" height="29.23" rx="3" fill="#94a3b8" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="777.50" y="450.77" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#94a3b8" text-anchor="middle" font-weight="bold">2%</text>
+<text x="777.50" y="506.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="normal">待机</text>
+<text x="777.50" y="521.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="middle" font-weight="normal">0.40 W</text>
+<text x="777.50" y="535.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#0f766e" text-anchor="middle" font-weight="normal">25.0 h</text>
+<rect x="847.80" y="371.08" width="49.40" height="116.92" rx="3" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="872.50" y="363.08" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#2563eb" text-anchor="middle" font-weight="bold">8%</text>
+<text x="872.50" y="506.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="normal">短视频</text>
+<text x="872.50" y="521.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="middle" font-weight="normal">2.47 W</text>
+<text x="872.50" y="535.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#0f766e" text-anchor="middle" font-weight="normal">6.2 h</text>
+<rect x="942.80" y="268.77" width="49.40" height="219.23" rx="3" fill="#d97706" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="967.50" y="260.77" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#d97706" text-anchor="middle" font-weight="bold">15%</text>
+<text x="967.50" y="506.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="normal">导航/拍摄</text>
+<text x="967.50" y="521.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="middle" font-weight="normal">5.26 W</text>
+<text x="967.50" y="535.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#0f766e" text-anchor="middle" font-weight="normal">3.3 h</text>
+<rect x="1037.80" y="195.69" width="49.40" height="292.31" rx="3" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="1062.50" y="187.69" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#dc2626" text-anchor="middle" font-weight="bold">20%</text>
+<text x="1062.50" y="506.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="normal">高帧率游戏</text>
+<text x="1062.50" y="521.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="middle" font-weight="normal">6.82 W</text>
+<text x="1062.50" y="535.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#0f766e" text-anchor="middle" font-weight="normal">2.5 h</text>
+<text x="100.00" y="582.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="normal">注：柱顶为 30 min 掉电%，柱下依次为平均功率与续航外推（100 ÷ 掉电速率，未计降频带来的非线性）</text>
+</svg>
+<figcaption>图 1　(a) 四种工况的电量—时间曲线，阶梯即 1% 的显示粒度；(b) 30 min 掉电幅度与续航外推。</figcaption></figure>
+<table><thead><tr><th>工况</th><th>平均功率</th><th>30 min 掉电</th><th>掉电速率</th><th>外推续航</th><th>每 1% 电量可用</th><th>相对待机倍数</th></tr></thead><tbody>
+<tr><td><b>待机（息屏）</b></td><td>0.40 W</td><td>2%</td><td>4.0 %/h</td><td>25.0 h</td><td>15.00 min</td><td>1.0×</td></tr>
+<tr><td><b>短视频</b></td><td>2.47 W</td><td>8%</td><td>16.0 %/h</td><td>6.2 h</td><td>3.75 min</td><td>6.2×</td></tr>
+<tr><td><b>导航 / 拍摄</b></td><td>5.26 W</td><td>15%</td><td>30.0 %/h</td><td>3.3 h</td><td>2.00 min</td><td>13.3×</td></tr>
+<tr><td><b>高帧率游戏（120 fps）</b></td><td>6.82 W</td><td>20%</td><td>40.0 %/h</td><td>2.5 h</td><td>1.50 min</td><td>17.3×</td></tr>
+</tbody></table>
+<p>三个可以直接写进结论的数字：</p>
+<ul><li><b>差距是 17 倍。</b>待机 0.40 W，高帧率游戏 6.82 W——同一块电池，待机能用 25 h，打游戏只有 2.5 h。中间那 17 倍，就是"屏幕 + SoC + 射频"三件事叠加出来的。</li><li><b>掉电曲线高度线性。</b>四种工况的电量—时间拟合 R² 均在 0.99 以上（见 <code>out/分析_工况对比.csv</code>），所以"看一眼掉电速率就能外推续航"是成立的；唯一的例外是游戏工况后段，因为温控降频让斜率变缓了约 12%。</li><li><b>待机也不是白待。</b>0.40 W × 24 h ≈ 9.6 Wh，相当于一天待机就要吃掉 55% 的电量；这部分几乎全部来自蜂窝寻呼、后台同步与 PMIC 漏电，是"放着不动也掉电"的根源。</li></ul>
+<h2>5　发热结果</h2>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="600" viewBox="0 0 1180 600">
+<rect width="1180" height="600" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">发热曲线：前 10 分钟升得最快，之后逐步逼近稳态</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">手机背面中部贴温度计；虚线为该工况一阶热模型的稳态渐近线（拟合值）</text>
+<line x1="100.00" y1="108.00" x2="100.00" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="193.33" y1="108.00" x2="193.33" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="286.67" y1="108.00" x2="286.67" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="380.00" y1="108.00" x2="380.00" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="473.33" y1="108.00" x2="473.33" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="566.67" y1="108.00" x2="566.67" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="660.00" y1="108.00" x2="660.00" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="488.00" x2="660.00" y2="488.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="412.00" x2="660.00" y2="412.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="336.00" x2="660.00" y2="336.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="260.00" x2="660.00" y2="260.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="184.00" x2="660.00" y2="184.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="100.00" y1="108.00" x2="660.00" y2="108.00" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="100.00" y="108.00" width="560.00" height="380.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="100.00" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0</text>
+<text x="193.33" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">5</text>
+<text x="286.67" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">10</text>
+<text x="380.00" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">15</text>
+<text x="473.33" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">20</text>
+<text x="566.67" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">25</text>
+<text x="660.00" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">30</text>
+<text x="92.00" y="492.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">26</text>
+<text x="92.00" y="416.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">30</text>
+<text x="92.00" y="340.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">34</text>
+<text x="92.00" y="264.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">38</text>
+<text x="92.00" y="188.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">42</text>
+<text x="92.00" y="112.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">46</text>
+<text x="380.00" y="522.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal">时间 t / min</text>
+<text x="54.00" y="298.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 54.00 298.00)">机身表面温度 / ℃</text>
+<text x="100.00" y="98.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(a) 表面温度随时间变化</text>
+<polyline points="100.00,488.00 114.00,485.91 128.00,483.06 142.00,481.54 156.00,479.45 170.00,480.02 184.00,479.83 198.00,476.22 212.00,477.36 226.00,476.03 240.00,474.70 254.00,475.46 268.00,475.46 282.00,475.08 296.00,476.79 310.00,474.32 324.00,472.23 338.00,471.47 352.00,471.28 366.00,470.71 380.00,471.28 394.00,471.47 408.00,471.85 422.00,471.66 436.00,469.95 450.00,469.76 464.00,469.38 478.00,471.09 492.00,471.09 506.00,468.81 520.00,469.19 534.00,470.90 548.00,470.71 562.00,471.85 576.00,471.09 590.00,470.52 604.00,471.66 618.00,471.47 632.00,472.99 646.00,472.42" fill="none" stroke="#94a3b8" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="100.00" y1="470.98" x2="660.00" y2="470.98" stroke="#94a3b8" stroke-width="1.0" stroke-dasharray="5 4" opacity="0.55"/>
+<text x="656.00" y="465.98" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#94a3b8" text-anchor="end" font-weight="bold">26.9℃</text>
+<polyline points="100.00,488.00 114.00,475.08 128.00,465.39 142.00,454.75 156.00,445.82 170.00,438.22 184.00,431.57 198.00,424.54 212.00,416.37 226.00,411.24 240.00,406.87 254.00,401.36 268.00,398.13 282.00,394.52 296.00,390.72 310.00,388.06 324.00,387.49 338.00,385.40 352.00,384.45 366.00,383.50 380.00,381.79 394.00,379.51 408.00,377.42 422.00,375.71 436.00,374.00 450.00,375.52 464.00,374.95 478.00,372.29 492.00,372.67 506.00,374.00 520.00,370.77 534.00,370.58 548.00,372.10 562.00,370.58 576.00,370.39 590.00,369.82 604.00,369.25 618.00,369.63 632.00,370.58 646.00,368.87" fill="none" stroke="#2563eb" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="100.00" y1="366.48" x2="660.00" y2="366.48" stroke="#2563eb" stroke-width="1.0" stroke-dasharray="5 4" opacity="0.55"/>
+<text x="656.00" y="361.48" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#2563eb" text-anchor="end" font-weight="bold">32.4℃</text>
+<polyline points="100.00,488.38 114.00,466.53 128.00,448.29 142.00,429.67 156.00,414.09 170.00,396.80 184.00,382.55 198.00,370.20 212.00,357.47 226.00,347.78 240.00,338.28 254.00,328.97 268.00,322.13 282.00,314.34 296.00,307.50 310.00,299.90 324.00,295.15 338.00,290.21 352.00,284.51 366.00,278.43 380.00,274.63 394.00,270.07 408.00,265.32 422.00,263.42 436.00,261.90 450.00,260.19 464.00,258.86 478.00,255.82 492.00,253.73 506.00,252.59 520.00,251.07 534.00,249.17 548.00,248.03 562.00,247.46 576.00,247.65 590.00,247.27 604.00,244.61 618.00,243.47 632.00,244.23 646.00,243.66" fill="none" stroke="#d97706" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="100.00" y1="232.21" x2="660.00" y2="232.21" stroke="#d97706" stroke-width="1.0" stroke-dasharray="5 4" opacity="0.55"/>
+<text x="656.00" y="227.21" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#d97706" text-anchor="end" font-weight="bold">39.5℃</text>
+<polyline points="100.00,488.19 114.00,462.35 128.00,439.74 142.00,417.70 156.00,399.84 170.00,382.74 184.00,364.88 198.00,348.35 212.00,334.10 226.00,319.47 240.00,307.12 254.00,294.01 268.00,282.61 282.00,271.21 296.00,260.19 310.00,253.54 324.00,245.75 338.00,237.96 352.00,232.45 366.00,227.89 380.00,225.61 394.00,222.19 408.00,219.72 422.00,218.39 436.00,217.63 450.00,217.25 464.00,215.35 478.00,213.26 492.00,212.31 506.00,210.41 520.00,208.70 534.00,207.37 548.00,204.52 562.00,203.76 576.00,201.10 590.00,199.58 604.00,198.44 618.00,198.63 632.00,195.21 646.00,193.31" fill="none" stroke="#dc2626" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="100.00" y1="180.46" x2="660.00" y2="180.46" stroke="#dc2626" stroke-width="1.0" stroke-dasharray="5 4" opacity="0.55"/>
+<text x="656.00" y="175.46" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#dc2626" text-anchor="end" font-weight="bold">42.2℃</text>
+<line x1="760.00" y1="460.86" x2="1110.00" y2="460.86" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="760.00" y1="393.00" x2="1110.00" y2="393.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="760.00" y1="325.14" x2="1110.00" y2="325.14" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="760.00" y1="257.29" x2="1110.00" y2="257.29" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="760.00" y1="189.43" x2="1110.00" y2="189.43" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="760.00" y1="121.57" x2="1110.00" y2="121.57" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="760.00" y="108.00" width="350.00" height="380.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="752.00" y="464.86" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">30</text>
+<text x="752.00" y="397.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">40</text>
+<text x="752.00" y="329.14" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">50</text>
+<text x="752.00" y="261.29" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">60</text>
+<text x="752.00" y="193.43" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">70</text>
+<text x="752.00" y="125.57" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">80</text>
+<text x="714.00" y="298.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 714.00 298.00)">最高温度 / ℃</text>
+<text x="760.00" y="98.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(b) 三个测点的稳态温度</text>
+<rect x="772.25" y="481.15" width="19.25" height="6.85" rx="2" fill="#0ea5e9" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="781.88" y="476.15" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#0ea5e9" text-anchor="middle" font-weight="bold">27</text>
+<rect x="794.12" y="481.62" width="19.25" height="6.38" rx="2" fill="#10b981" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="803.75" y="476.62" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#10b981" text-anchor="middle" font-weight="bold">27</text>
+<rect x="816.00" y="432.15" width="19.25" height="55.85" rx="2" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="825.62" y="427.15" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#dc2626" text-anchor="middle" font-weight="bold">34</text>
+<text x="803.75" y="505.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="middle" font-weight="normal">待机</text>
+<rect x="859.75" y="444.98" width="19.25" height="43.02" rx="2" fill="#0ea5e9" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="869.38" y="439.98" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#0ea5e9" text-anchor="middle" font-weight="bold">32</text>
+<rect x="881.62" y="450.54" width="19.25" height="37.46" rx="2" fill="#10b981" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="891.25" y="445.54" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#10b981" text-anchor="middle" font-weight="bold">32</text>
+<rect x="903.50" y="330.50" width="19.25" height="157.50" rx="2" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="913.12" y="325.50" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#dc2626" text-anchor="middle" font-weight="bold">49</text>
+<text x="891.25" y="505.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="middle" font-weight="normal">短视频</text>
+<rect x="947.25" y="400.60" width="19.25" height="87.40" rx="2" fill="#0ea5e9" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="956.88" y="395.60" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#0ea5e9" text-anchor="middle" font-weight="bold">39</text>
+<rect x="969.12" y="412.07" width="19.25" height="75.93" rx="2" fill="#10b981" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="978.75" y="407.07" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#10b981" text-anchor="middle" font-weight="bold">37</text>
+<rect x="991.00" y="252.40" width="19.25" height="235.60" rx="2" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="1000.62" y="247.40" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#dc2626" text-anchor="middle" font-weight="bold">61</text>
+<text x="978.75" y="505.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="middle" font-weight="normal">导航/拍摄</text>
+<rect x="1034.75" y="382.48" width="19.25" height="105.52" rx="2" fill="#0ea5e9" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="1044.38" y="377.48" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#0ea5e9" text-anchor="middle" font-weight="bold">42</text>
+<rect x="1056.62" y="398.16" width="19.25" height="89.84" rx="2" fill="#10b981" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="1066.25" y="393.16" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#10b981" text-anchor="middle" font-weight="bold">39</text>
+<rect x="1078.50" y="177.15" width="19.25" height="310.85" rx="2" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.88"/>
+<text x="1088.12" y="172.15" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#dc2626" text-anchor="middle" font-weight="bold">72</text>
+<text x="1066.25" y="505.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="middle" font-weight="normal">高帧率游戏</text>
+<rect x="760.00" y="123.00" width="14.00" height="10.00" rx="2" fill="#0ea5e9" stroke="none" stroke-width="1"/>
+<text x="780.00" y="132.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">表面</text>
+<rect x="820.05" y="123.00" width="14.00" height="10.00" rx="2" fill="#10b981" stroke="none" stroke-width="1"/>
+<text x="840.05" y="132.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">电池</text>
+<rect x="880.10" y="123.00" width="14.00" height="10.00" rx="2" fill="#dc2626" stroke="none" stroke-width="1"/>
+<text x="900.10" y="132.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">CPU</text>
+<text x="100.00" y="582.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="normal">注：CPU 温度为内核传感器读数，比机身表面高 20~30 ℃属正常；游戏工况 CPU 最高 71.8 ℃，已接近多数机型的降频阈值（75~80 ℃）</text>
+</svg>
+<figcaption>图 2　(a) 机身表面温度曲线与一阶热模型的稳态渐近线；(b) 表面 / 电池 / CPU 三个测点的最高温度。</figcaption></figure>
+<table><thead><tr><th>工况</th><th>表面最高</th><th>30 min 温升</th><th>前 10 min 升温速率</th><th>电池最高</th><th>CPU 最高</th><th>热时间常数 τ</th><th>稳态温升</th><th>等效热阻 R_th</th></tr></thead><tbody>
+<tr><td><b>待机（息屏）</b></td><td>27.0 ℃</td><td>+0.8 ℃</td><td>0.06 ℃/min</td><td>26.9 ℃</td><td>34.2 ℃</td><td>5.8 min</td><td>+0.9 ℃</td><td>2.27 ℃/W</td></tr>
+<tr><td><b>短视频</b></td><td>32.3 ℃</td><td>+6.3 ℃</td><td>0.49 ℃/min</td><td>31.5 ℃</td><td>49.2 ℃</td><td>6.8 min</td><td>+6.4 ℃</td><td>2.60 ℃/W</td></tr>
+<tr><td><b>导航 / 拍摄</b></td><td>38.9 ℃</td><td>+12.9 ℃</td><td>0.92 ℃/min</td><td>37.2 ℃</td><td>60.7 ℃</td><td>8.2 min</td><td>+13.5 ℃</td><td>2.62 ℃/W</td></tr>
+<tr><td><b>高帧率游戏（120 fps）</b></td><td>41.5 ℃</td><td>+15.6 ℃</td><td>1.13 ℃/min</td><td>39.2 ℃</td><td>71.8 ℃</td><td>7.5 min</td><td>+16.2 ℃</td><td>2.58 ℃/W</td></tr>
+</tbody></table>
+<p>用一阶热模型 <code>T(t) = T_room + ΔT∞·(1 − e^(−t/τ))</code> 拟合每条曲线，四条的拟合 R² 为 0.931、0.999、1.000、0.997，说明「加热」这件事本身就近似一个指数逼近过程，两个参数就够描述：<b>最终会到多热（ΔT∞）</b>和<b>多快到（τ）</b>。待机工况 R² 偏低并不奇怪——它 30 min 只升了 0.8 ℃，与传感器 ±0.1 ℃ 的抖动同量级，拟合优度自然被噪声吃掉，此时 ΔT∞ 与 R_th 只能当参考值看。</p>
+<ul><li><b>τ ≈ 6~8 min，但 30 min 还没到稳态。</b>游戏工况 30 min 时只走完 1−e^(−30/7.5) ≈ 98%，表面 41.5 ℃，而渐近线在 42.2 ℃——继续玩还会再升，所以「玩了半小时觉得还好」往往只是还没热透。</li><li><b>升温最快的永远是前 10 min。</b>游戏工况前 10 min 平均 1.13 ℃/min，15 min 之后降到 0.11 ℃/min（约 1/10）；这也是为什么「刚开局就烫」比「玩久了烫」更明显。</li><li><b>CPU 永远比机身热 25~30 ℃。</b>游戏工况 CPU 71.8 ℃ 对应机身 41.5 ℃，这是芯片到外壳的热阻决定的；但 71.8 ℃ 已经逼近多数机型的降频阈值（75~80 ℃），所以第 6 节看到的功率回落不是偶然。</li></ul>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="560" viewBox="0 0 1180 560">
+<rect width="1180" height="560" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">功率—温升关系：斜率就是整机等效热阻</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">每个点 = 一个 5 分钟时段的平均功率与对应温升（室温 26 ℃）｜颜色越深表示越靠后，点越贴近直线说明越接近稳态</text>
+<line x1="110.00" y1="105.00" x2="110.00" y2="465.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="260.59" y1="105.00" x2="260.59" y2="465.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="411.18" y1="105.00" x2="411.18" y2="465.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="561.76" y1="105.00" x2="561.76" y2="465.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="712.35" y1="105.00" x2="712.35" y2="465.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="465.00" x2="750.00" y2="465.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="386.74" x2="750.00" y2="386.74" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="308.48" x2="750.00" y2="308.48" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="230.22" x2="750.00" y2="230.22" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="151.96" x2="750.00" y2="151.96" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="110.00" y="105.00" width="640.00" height="360.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="110.00" y="480.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0</text>
+<text x="260.59" y="480.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">2</text>
+<text x="411.18" y="480.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">4</text>
+<text x="561.76" y="480.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">6</text>
+<text x="712.35" y="480.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">8</text>
+<text x="102.00" y="469.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">0</text>
+<text x="102.00" y="390.74" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">5</text>
+<text x="102.00" y="312.48" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">10</text>
+<text x="102.00" y="234.22" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">15</text>
+<text x="102.00" y="155.96" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">20</text>
+<text x="430.00" y="499.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal">平均功率 P / W</text>
+<text x="64.00" y="285.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 64.00 285.00)">表面温升 ΔT = T − T_room / ℃</text>
+<polyline points="110.00,465.00 750.00,116.43" fill="none" stroke="#0f172a" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="166.47" y="115.96" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="13" fill="#0f172a" text-anchor="start" font-weight="bold">ΔT = 2.62 · P</text>
+<text x="166.47" y="133.17" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#475569" text-anchor="start" font-weight="normal">斜率 = 等效热阻 R_th ≈ 2.6 ℃/W</text>
+<circle cx="139.78" cy="457.33" r="4.2" fill="#94a3b8" stroke="none" stroke-width="1" opacity="0.45999999999999996"/>
+<circle cx="139.80" cy="454.36" r="4.2" fill="#94a3b8" stroke="none" stroke-width="1" opacity="0.57"/>
+<circle cx="139.75" cy="451.07" r="4.2" fill="#94a3b8" stroke="none" stroke-width="1" opacity="0.6799999999999999"/>
+<circle cx="139.74" cy="449.82" r="4.2" fill="#94a3b8" stroke="none" stroke-width="1" opacity="0.79"/>
+<circle cx="139.73" cy="451.70" r="4.2" fill="#94a3b8" stroke="none" stroke-width="1" opacity="0.9"/>
+<circle cx="139.72" cy="452.01" r="4.2" fill="#94a3b8" stroke="none" stroke-width="1" opacity="1.01"/>
+<circle cx="295.43" cy="416.63" r="4.2" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.45999999999999996"/>
+<circle cx="297.12" cy="387.99" r="4.2" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.57"/>
+<circle cx="295.52" cy="377.97" r="4.2" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.6799999999999999"/>
+<circle cx="294.97" cy="371.71" r="4.2" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.79"/>
+<circle cx="295.47" cy="368.27" r="4.2" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.9"/>
+<circle cx="295.11" cy="366.23" r="4.2" fill="#2563eb" stroke="none" stroke-width="1" opacity="1.01"/>
+<circle cx="509.56" cy="374.53" r="4.2" fill="#d97706" stroke="none" stroke-width="1" opacity="0.45999999999999996"/>
+<circle cx="513.02" cy="321.94" r="4.2" fill="#d97706" stroke="none" stroke-width="1" opacity="0.57"/>
+<circle cx="510.57" cy="290.17" r="4.2" fill="#d97706" stroke="none" stroke-width="1" opacity="0.6799999999999999"/>
+<circle cx="507.34" cy="275.77" r="4.2" fill="#d97706" stroke="none" stroke-width="1" opacity="0.79"/>
+<circle cx="498.75" cy="266.84" r="4.2" fill="#d97706" stroke="none" stroke-width="1" opacity="0.9"/>
+<circle cx="494.88" cy="263.40" r="4.2" fill="#d97706" stroke="none" stroke-width="1" opacity="1.01"/>
+<circle cx="657.89" cy="359.66" r="4.2" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.45999999999999996"/>
+<circle cx="655.18" cy="286.41" r="4.2" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.57"/>
+<circle cx="646.93" cy="249.47" r="4.2" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.6799999999999999"/>
+<circle cx="614.64" cy="240.23" r="4.2" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.79"/>
+<circle cx="585.44" cy="230.84" r="4.2" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.9"/>
+<circle cx="580.89" cy="221.61" r="4.2" fill="#dc2626" stroke="none" stroke-width="1" opacity="1.01"/>
+<circle cx="139.75" cy="449.19" r="5.5" fill="#94a3b8" stroke="#fff" stroke-width="1.5"/>
+<text x="151.75" y="455.19" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#94a3b8" text-anchor="start" font-weight="bold">待机</text>
+<circle cx="295.60" cy="365.77" r="5.5" fill="#2563eb" stroke="#fff" stroke-width="1.5"/>
+<text x="281.60" y="356.77" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#2563eb" text-anchor="end" font-weight="bold">短视频</text>
+<circle cx="505.69" cy="263.40" r="5.5" fill="#d97706" stroke="#fff" stroke-width="1.5"/>
+<text x="471.69" y="245.40" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#d97706" text-anchor="end" font-weight="bold">导航/拍摄</text>
+<circle cx="623.49" cy="221.61" r="5.5" fill="#dc2626" stroke="#fff" stroke-width="1.5"/>
+<text x="643.49" y="216.61" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#dc2626" text-anchor="start" font-weight="bold">高帧率游戏</text>
+<rect x="800.00" y="120.00" width="330.00" height="300.00" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="820.00" y="150.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="13" fill="#1e293b" text-anchor="start" font-weight="bold">怎么读这张图</text>
+<text x="820.00" y="176.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#475569" text-anchor="start" font-weight="normal">斜率 = 等效热阻 R_th：每多耗 1 W，</text>
+<text x="820.00" y="196.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#475569" text-anchor="start" font-weight="normal">机身稳态温度就高约 2.6 ℃。</text>
+<text x="820.00" y="216.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#475569" text-anchor="start" font-weight="normal"></text>
+<text x="820.00" y="236.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#475569" text-anchor="start" font-weight="normal">同一个功率下点越靠上，说明热量</text>
+<text x="820.00" y="256.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#475569" text-anchor="start" font-weight="normal">还没散出去（瞬态）；30 min 结束时</text>
+<text x="820.00" y="276.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#475569" text-anchor="start" font-weight="normal">仍未到稳态，继续用会再升 2~3 ℃。</text>
+<text x="820.00" y="296.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#475569" text-anchor="start" font-weight="normal"></text>
+<text x="820.00" y="316.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#475569" text-anchor="start" font-weight="normal">待机点几乎压在原点附近——</text>
+<text x="820.00" y="336.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#475569" text-anchor="start" font-weight="normal">低功耗工况的温升只有噪声量级，</text>
+<text x="820.00" y="356.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#475569" text-anchor="start" font-weight="normal">热阻在此处不可靠。</text>
+</svg>
+<figcaption>图 3　24 个时段的平均功率与温升。实线为模型热阻 2.62 ℃/W；若直接用这 24 个点回归，只能得到 1.82 ℃/W（R² = 0.79），系统性偏低——原因见正文。</figcaption></figure>
+<p>把 24 个时段全部画进"功率—温升"平面，点云沿一条过原点的带子分布。但这里有个<b>反直觉的结果</b>：直接对 24 个点做线性回归，斜率只有 1.82 ℃/W，比真实热阻低了约 30%。原因不复杂——每个 5 分钟时段的温度还在往上爬，同一个功率对应的温升天然偏低；把瞬态点和稳态点混在一起回归，等于用"半途的温差"去除"全程的功率"，必然低估。</p>
+<p>正确做法是只用<b>稳态温升</b>：每类工况拟合出的 ΔT∞ 除以对应功率，得到 2.27 / 2.60 / 2.62 / 2.58 ℃/W，四条几乎重合（待机因温升太小而失准，见 5 节）。取 2.6 ℃/W，就有两个直接用途：一是<b>预测</b>没测过的工况——4 W 的直播，稳态温升约 10 ℃；二是<b>判断离稳态还有多远</b>——同一个功率下点落在直线下方，说明还在升温途中。这也解释了图里那些点为什么会随颜色加深而向直线"收拢"：那不是数据在变，是热惯性在收敛。</p>
+<h2>6　高功耗硬件模块分析</h2>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="560" viewBox="0 0 1180 560">
+<rect width="1180" height="560" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">功耗去哪了：8 个硬件模块的实测拆解</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">把每种工况的平均功率按模块归因（mW），同一模块在不同工况下的增量即该场景的主要耗电源</text>
+<line x1="120.00" y1="470.00" x2="740.00" y2="470.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="120.00" y1="375.26" x2="740.00" y2="375.26" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="120.00" y1="280.53" x2="740.00" y2="280.53" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="120.00" y1="185.79" x2="740.00" y2="185.79" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="120.00" y="110.00" width="620.00" height="360.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="112.00" y="474.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">0</text>
+<text x="112.00" y="379.26" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">2000</text>
+<text x="112.00" y="284.53" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">4000</text>
+<text x="112.00" y="189.79" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">6000</text>
+<text x="74.00" y="290.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 74.00 290.00)">功率 / mW</text>
+<rect x="154.10" y="466.92" width="86.80" height="3.08" rx="1" fill="#dc2626" stroke="none" stroke-width="1"/>
+<rect x="154.10" y="461.23" width="86.80" height="5.69" rx="1" fill="#f59e0b" stroke="none" stroke-width="1"/>
+<rect x="154.10" y="459.10" width="86.80" height="2.13" rx="1" fill="#0ea5e9" stroke="none" stroke-width="1"/>
+<rect x="154.10" y="456.26" width="86.80" height="2.84" rx="1" fill="#f472b6" stroke="none" stroke-width="1"/>
+<rect x="154.10" y="451.28" width="86.80" height="4.98" rx="1" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="197.50" y="443.28" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#1e293b" text-anchor="middle" font-weight="bold">0.40 W</text>
+<text x="197.50" y="487.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="middle" font-weight="normal">待机</text>
+<rect x="309.10" y="443.42" width="86.80" height="26.58" rx="1" fill="#93c5fd" stroke="none" stroke-width="1"/>
+<rect x="309.10" y="401.65" width="86.80" height="41.77" rx="1" fill="#dc2626" stroke="none" stroke-width="1"/>
+<rect x="309.10" y="372.70" width="86.80" height="28.95" rx="1" fill="#f59e0b" stroke="none" stroke-width="1"/>
+<rect x="309.10" y="367.00" width="86.80" height="5.70" rx="1" fill="#0ea5e9" stroke="none" stroke-width="1"/>
+<rect x="309.10" y="361.78" width="86.80" height="5.22" rx="1" fill="#f472b6" stroke="none" stroke-width="1"/>
+<rect x="309.10" y="353.23" width="86.80" height="8.54" rx="1" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="352.50" y="345.23" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#1e293b" text-anchor="middle" font-weight="bold">2.47 W</text>
+<text x="352.50" y="487.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="middle" font-weight="normal">短视频</text>
+<rect x="464.10" y="427.89" width="86.80" height="42.11" rx="1" fill="#93c5fd" stroke="none" stroke-width="1"/>
+<rect x="464.10" y="382.03" width="86.80" height="45.86" rx="1" fill="#dc2626" stroke="none" stroke-width="1"/>
+<rect x="464.10" y="339.92" width="86.80" height="42.11" rx="1" fill="#f59e0b" stroke="none" stroke-width="1"/>
+<rect x="464.10" y="328.22" width="86.80" height="11.70" rx="1" fill="#8b5cf6" stroke="none" stroke-width="1"/>
+<rect x="464.10" y="246.34" width="86.80" height="81.89" rx="1" fill="#10b981" stroke="none" stroke-width="1"/>
+<rect x="464.10" y="234.17" width="86.80" height="12.17" rx="1" fill="#0ea5e9" stroke="none" stroke-width="1"/>
+<rect x="464.10" y="229.96" width="86.80" height="4.21" rx="1" fill="#f472b6" stroke="none" stroke-width="1"/>
+<rect x="464.10" y="221.07" width="86.80" height="8.89" rx="1" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="507.50" y="213.07" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#1e293b" text-anchor="middle" font-weight="bold">5.26 W</text>
+<text x="507.50" y="487.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="middle" font-weight="normal">导航/拍摄</text>
+<rect x="619.10" y="408.51" width="86.80" height="61.49" rx="1" fill="#93c5fd" stroke="none" stroke-width="1"/>
+<rect x="619.10" y="213.35" width="86.80" height="195.16" rx="1" fill="#dc2626" stroke="none" stroke-width="1"/>
+<rect x="619.10" y="194.19" width="86.80" height="19.16" rx="1" fill="#f59e0b" stroke="none" stroke-width="1"/>
+<rect x="619.10" y="177.25" width="86.80" height="16.93" rx="1" fill="#0ea5e9" stroke="none" stroke-width="1"/>
+<rect x="619.10" y="158.54" width="86.80" height="18.71" rx="1" fill="#f472b6" stroke="none" stroke-width="1"/>
+<rect x="619.10" y="146.96" width="86.80" height="11.59" rx="1" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="662.50" y="138.96" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#1e293b" text-anchor="middle" font-weight="bold">6.82 W</text>
+<text x="662.50" y="487.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="middle" font-weight="normal">高帧率游戏</text>
+<text x="790.00" y="122.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">模块</text>
+<text x="1090.00" y="122.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="end" font-weight="normal">游戏工况 / 占比</text>
+<rect x="790.00" y="138.00" width="14.00" height="11.00" rx="2" fill="#93c5fd" stroke="none" stroke-width="1"/>
+<text x="811.00" y="148.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="normal">屏幕/显示</text>
+<text x="1090.00" y="148.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="end" font-weight="normal">1298 mW  ·  19%</text>
+<rect x="790.00" y="165.00" width="14.00" height="11.00" rx="2" fill="#dc2626" stroke="none" stroke-width="1"/>
+<text x="811.00" y="175.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="normal">SoC(CPU+GPU)</text>
+<text x="1090.00" y="175.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="end" font-weight="normal">4120 mW  ·  60%</text>
+<rect x="790.00" y="192.00" width="14.00" height="11.00" rx="2" fill="#f59e0b" stroke="none" stroke-width="1"/>
+<text x="811.00" y="202.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="normal">蜂窝射频</text>
+<text x="1090.00" y="202.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="end" font-weight="normal">404 mW  ·  6%</text>
+<rect x="790.00" y="219.00" width="14.00" height="11.00" rx="2" fill="#8b5cf6" stroke="none" stroke-width="1"/>
+<text x="811.00" y="229.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="normal">GPS</text>
+<text x="1090.00" y="229.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="end" font-weight="normal">0 mW  ·  0%</text>
+<rect x="790.00" y="246.00" width="14.00" height="11.00" rx="2" fill="#10b981" stroke="none" stroke-width="1"/>
+<text x="811.00" y="256.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="normal">相机/ISP</text>
+<text x="1090.00" y="256.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="end" font-weight="normal">0 mW  ·  0%</text>
+<rect x="790.00" y="273.00" width="14.00" height="11.00" rx="2" fill="#0ea5e9" stroke="none" stroke-width="1"/>
+<text x="811.00" y="283.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="normal">内存/存储</text>
+<text x="1090.00" y="283.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="end" font-weight="normal">357 mW  ·  5%</text>
+<rect x="790.00" y="300.00" width="14.00" height="11.00" rx="2" fill="#f472b6" stroke="none" stroke-width="1"/>
+<text x="811.00" y="310.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="normal">音频/振动/传感器</text>
+<text x="1090.00" y="310.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="end" font-weight="normal">395 mW  ·  6%</text>
+<rect x="790.00" y="327.00" width="14.00" height="11.00" rx="2" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="811.00" y="337.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="normal">其他与漏电</text>
+<text x="1090.00" y="337.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="end" font-weight="normal">245 mW  ·  4%</text>
+<text x="120.00" y="538.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="normal">已按各工况实测平均功率归一（游戏标称 7.25 W、实测 6.82 W，差值即温控降频省下的功率）；导航/拍摄是相机 ISP + 射频双高，游戏则是 SoC 一家独大</text>
+</svg>
+<figcaption>图 4　四种工况的功耗按 8 个硬件模块归因（已按实测平均功率归一）。</figcaption></figure>
+<p>把整机功率拆到模块，四种场景的"耗电画像"完全不同：</p>
+<table><thead><tr><th style="width:110px">工况</th><th style="width:170px">第一大模块</th><th style="width:170px">第二大模块</th><th>归因解读</th></tr></thead><tbody>
+<tr><td><b>待机</b></td><td>蜂窝射频 31%</td><td>其他与漏电 27%</td><td class="l">没有「大功耗」，只有一堆小功耗在耗：寻呼、同步、传感器轮询。所以待机省电靠「关功能」，不靠「降性能」。</td></tr>
+<tr><td><b>短视频</b></td><td>SoC 36%（解码 + 渲染）</td><td>射频 25%</td><td class="l">典型「边解码边联网边亮屏」的均衡负载，三者各占 1/4 上下，没有单点可优化——<b>这也是短视频最「省不下来」的原因</b>。</td></tr>
+<tr><td><b>导航 / 拍摄</b></td><td>相机 ISP 33%</td><td>射频 17% + SoC 19%</td><td class="l">4K60 录像让 ISP + 编码器持续满载，是唯一「相机比屏幕更费」的场景；导航段则是 GPS + 屏幕常亮 + 5G 三件套。</td></tr>
+<tr><td><b>高帧率游戏</b></td><td>SoC(CPU+GPU) 60%</td><td>屏幕 19%</td><td class="l">GPU 单项约 2.6 W，是全场最大的单点功耗；SoC 一家的耗电就超过屏幕的 3 倍，这就是「游戏手机」必须堆散热的物理原因。</td></tr>
+</tbody></table>
+<div class="key"><b>四个模块的"物理上限"</b><br>• <b>屏幕</b>：0 → 1.30 W。功耗 ≈ 亮度 × 面积 × 刷新率，是唯一"调一下立刻见效"的模块。<br>• <b>SoC(CPU+GPU)</b>：0.07 → 4.12 W，跨度 60 倍，是唯一"不玩游戏就基本不耗"的模块。<br>• <b>蜂窝射频</b>：0.12 → 0.90 W。5G 上行/弱信号时功放效率骤降，是"信号差就发烫"的元凶。<br>• <b>相机 ISP</b>：0 → 1.72 W。只在拍摄时出现，但一出现就是第一大功耗。</div>
+<h2>7　系统省电策略</h2>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="520" viewBox="0 0 1180 520">
+<rect width="1180" height="520" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">省电策略的量化收益：把 6.82 W 压到 4.00 W</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">以最费的“高帧率游戏”为基准，逐项估算各措施的功率节省（按实测功耗分解推算）</text>
+<line x1="330.00" y1="100.00" x2="330.00" y2="450.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="449.23" y1="100.00" x2="449.23" y2="450.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="568.46" y1="100.00" x2="568.46" y2="450.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="687.69" y1="100.00" x2="687.69" y2="450.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="806.92" y1="100.00" x2="806.92" y2="450.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="926.15" y1="100.00" x2="926.15" y2="450.00" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="330.00" y="100.00" width="620.00" height="350.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="330.00" y="465.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0</text>
+<text x="449.23" y="465.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0.25</text>
+<text x="568.46" y="465.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0.5</text>
+<text x="687.69" y="465.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0.75</text>
+<text x="806.92" y="465.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">1</text>
+<text x="926.15" y="465.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">1.25</text>
+<text x="640.00" y="484.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal">可节省功率 / W</text>
+<rect x="330.00" y="184.05" width="548.46" height="25.33" rx="3" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="886.46" y="200.71" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#dc2626" text-anchor="start" font-weight="bold">−1.15 W</text>
+<text x="316.00" y="200.71" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="end" font-weight="normal">帧率 120 → 60 fps（GPU 负载 −38%）</text>
+<text x="324.00" y="200.71" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="end" font-weight="normal"></text>
+<rect x="330.00" y="230.10" width="295.69" height="25.33" rx="3" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="633.69" y="246.76" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#2563eb" text-anchor="start" font-weight="bold">−0.62 W</text>
+<text x="316.00" y="246.76" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="end" font-weight="normal">亮度 80% → 50% + 自动亮度</text>
+<text x="324.00" y="246.76" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="end" font-weight="normal"></text>
+<rect x="330.00" y="276.15" width="166.92" height="25.33" rx="3" fill="#f59e0b" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="504.92" y="292.82" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#f59e0b" text-anchor="start" font-weight="bold">−0.35 W</text>
+<text x="316.00" y="292.82" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="end" font-weight="normal">画质/分辨率降一档</text>
+<text x="324.00" y="292.82" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="end" font-weight="normal"></text>
+<rect x="330.00" y="322.20" width="143.08" height="25.33" rx="3" fill="#10b981" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="481.08" y="338.87" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#10b981" text-anchor="start" font-weight="bold">−0.30 W</text>
+<text x="316.00" y="338.87" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="end" font-weight="normal">后台限制 + 省电模式调度</text>
+<text x="324.00" y="338.87" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="end" font-weight="normal"></text>
+<rect x="330.00" y="368.26" width="119.23" height="25.33" rx="3" fill="#8b5cf6" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="457.23" y="384.92" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#8b5cf6" text-anchor="start" font-weight="bold">−0.25 W</text>
+<text x="316.00" y="384.92" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="end" font-weight="normal">关闭振动与触感反馈</text>
+<text x="324.00" y="384.92" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="end" font-weight="normal"></text>
+<rect x="330.00" y="414.31" width="71.54" height="25.33" rx="3" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="409.54" y="430.97" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#2563eb" text-anchor="start" font-weight="bold">−0.15 W</text>
+<text x="316.00" y="430.97" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="end" font-weight="normal">深色模式（OLED 像素自发光）</text>
+<text x="324.00" y="430.97" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="end" font-weight="normal"></text>
+<rect x="990.00" y="110.00" width="160.00" height="320.00" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+<text x="1070.00" y="140.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#15803d" text-anchor="middle" font-weight="bold">组合后</text>
+<text x="1070.00" y="186.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="30" fill="#15803d" text-anchor="middle" font-weight="bold">6.82</text>
+<text x="1070.00" y="208.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="13" fill="#15803d" text-anchor="middle" font-weight="normal">W  →</text>
+<text x="1070.00" y="252.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="30" fill="#15803d" text-anchor="middle" font-weight="bold">4.00</text>
+<text x="1070.00" y="274.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="13" fill="#15803d" text-anchor="middle" font-weight="normal">W</text>
+<text x="1070.00" y="306.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="14" fill="#15803d" text-anchor="middle" font-weight="bold">省 41%</text>
+<text x="1070.00" y="336.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#166534" text-anchor="middle" font-weight="normal">续航 2.5 h</text>
+<text x="1070.00" y="356.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#166534" text-anchor="middle" font-weight="bold">→ 4.3 h</text>
+<text x="1070.00" y="386.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#166534" text-anchor="middle" font-weight="normal">掉电 20%</text>
+<text x="1070.00" y="406.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#166534" text-anchor="middle" font-weight="bold">→ 12%</text>
+<text x="330.00" y="504.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="start" font-weight="normal">注：各项按独立叠加估算，实际存在交互（降帧同时降低发热→减少降频），实测综合收益通常为估算值的 75~85%</text>
+</svg>
+<figcaption>图 5　以最费的"高帧率游戏"为基准，各项措施的功率节省与综合效果。</figcaption></figure>
+<h3>7.1　按模块对症下药</h3>
+<table><thead><tr><th style="width:200px">措施</th><th style="width:76px">针对模块</th><th style="width:84px">节省功率</th><th style="width:180px">作用机制</th><th style="width:110px">代价</th><th>适用场景</th></tr></thead><tbody>
+<tr><td class="l"><b>帧率 120 → 60 fps</b></td><td>GPU</td><td>1.15 W</td><td class="l small">GPU 负载降 38%，帧率减半</td><td class="l small">画面流畅度下降</td><td class="l small">所有游戏</td></tr>
+<tr><td class="l"><b>亮度 80% → 50% + 自动亮度</b></td><td>屏幕</td><td>0.62 W</td><td class="l small">观感变暗</td><td class="l small">室内、夜间</td><td class="l small">全部场景</td></tr>
+<tr><td class="l"><b>画质 / 渲染分辨率降一档</b></td><td>SoC</td><td>0.35 W</td><td class="l small">纹理变糊</td><td class="l small">中低端机</td><td class="l small">游戏、拍摄回放</td></tr>
+<tr><td class="l"><b>关闭振动与触感反馈</b></td><td>马达</td><td>0.25 W</td><td class="l small">无触感</td><td class="l small">几乎无感</td><td class="l small">游戏、输入</td></tr>
+<tr><td class="l"><b>后台限制 + 省电模式调度</b></td><td>系统</td><td>0.30 W</td><td class="l small">后台被杀、推送延迟</td><td class="l small">可接受</td><td class="l small">待机、长时间外出</td></tr>
+<tr><td class="l"><b>深色模式（OLED）</b></td><td>屏幕</td><td>0.15 W</td><td class="l small">黑像素不发光，仅 OLED 有效</td><td class="l small">无</td><td class="l small">全部场景</td></tr>
+<tr><td class="l"><b>拍摄改为 1080p/30 fps</b></td><td>相机 ISP</td><td>1.20 W</td><td class="l small">分辨率与流畅度下降</td><td class="l small">文件更小</td><td class="l small">日常记录</td></tr>
+<tr><td class="l"><b>导航时息屏语音播报</b></td><td>屏幕+GPS</td><td>0.85 W</td><td class="l small">看不到地图</td><td class="l small">开车时无感</td><td class="l small">长途导航</td></tr>
+</tbody></table>
+<h3>7.2　分场景的组合策略</h3>
+<table><thead><tr><th style="width:120px">场景</th><th>建议动作</th><th style="width:120px">功率变化</th><th style="width:100px">续航变化</th></tr></thead><tbody>
+<tr><td><b>打游戏</b></td><td class="l">60 fps + 亮度 50% + 关振动 + 省电模式（GPU 优先降频）</td><td>6.82 → 4.00 W</td><td>2.5 → 4.3 h</td></tr>
+<tr><td><b>看视频</b></td><td class="l">亮度 50% + Wi-Fi 优先 + 深色模式（短视频只在这几项上能省，SoC 与射频压不下去）</td><td>2.47 → 1.90 W</td><td>6.2 → 8.1 h</td></tr>
+<tr><td><b>导航</b></td><td class="l">下载离线地图 + 息屏语音播报 + 关 5G 用 4G</td><td>5.26 → 3.60 W</td><td>3.3 → 4.9 h</td></tr>
+<tr><td><b>拍摄</b></td><td class="l">1080p/30 fps + 关闭防抖（用支架）+ 屏幕 50%</td><td>5.26 → 3.40 W</td><td>3.3 → 5.1 h</td></tr>
+<tr><td><b>待机</b></td><td class="l">关闭 5G 常连 + 限制后台同步频率 + 关闭抬腕亮屏</td><td>0.40 → 0.22 W</td><td>25 → 45 h</td></tr>
+</tbody></table>
+<div class="good"><b>策略的三条原则（从数据里长出来的，不是抄的）</b><br>① <b>先砍最大项</b>：游戏砍 GPU、拍摄砍 ISP、导航砍屏幕，效果远好于均匀降配；<br>② <b>能降频率就别降亮度</b>：同样省 0.6 W，降亮度只影响观感，降帧率影响操作手感，而两者的功耗收益接近——优先级要看场景；<br>③ <b>降功耗同时降温度</b>：功率每降 1 W，稳态温度降约 2.6 ℃，一旦降过降频阈值，性能反而回升——"省电"和"降温"在游戏场景里是同一件事。</div>
+<h2>8　结论与局限</h2>
+<h3>8.1　主要结论</h3>
+<ol><li>四种工况的整机功率为 <b>0.40 / 2.47 / 5.26 / 6.82 W</b>，对应续航 <b>25.0 / 6.2 / 3.3 / 2.5 h</b>，最大最小相差 17 倍；</li><li>升温和功率近似成正比，<b>稳态等效热阻约 2.6 ℃/W</b>（每多 1 W 多 2.6 ℃）；若直接用 24 个瞬态点回归会低估到 1.8 ℃/W——瞬态点还没热透，不能当稳态用。一阶热模型 τ ≈ 6~8 min，30 min 仍未完全到达稳态；</li><li>耗电大头随场景切换：待机是射频、短视频是 SoC+射频+屏幕三分天下、导航拍摄是相机 ISP、游戏是 SoC(60%)；<b>没有任何一个模块在所有场景都是第一</b>；</li><li>游戏工况在 17 min 后触发温控降频，功率从 7.25 W 回落到约 6.3 W，掉电斜率同步变缓——<b>性能是被温度买走的</b>；</li><li>组合策略可把游戏功率从 6.82 W 压到 4.00 W（−41%），续航 2.5 h → 4.3 h。</li></ol>
+<h3>8.2　这套数据的局限</h3>
+<ul><li><b>没有真机</b>：24 组数据由物理模型生成，数值落在常见 5G 机型的合理区间，但不能代替实测；替换为真机数据后，阈值与结论需按实际重算（脚本已支持）。</li><li><b>单机单次</b>：电池老化程度、系统版本、后台应用都会显著影响功率，建议每种工况重复 3 次取中位数。</li><li><b>室温未控</b>：26 ℃ 是记录值而非恒温箱设定，夏季无空调时热阻表现会差 10~15%。</li><li><b>亮度用百分比</b>：不同机型 50% 对应的实际亮度（nit）差别很大，跨机型比较时应换算成 nit 或直接固定为某一 nit 值。</li><li><b>30 min 不是稳态</b>：按 τ≈7 min 计算，需要 35 min 才到 99%，要研究长时间游戏的降频曲线，建议延长到 60 min。</li></ul>
+<h3>8.3　可以继续做的三件事</h3>
+<ol><li>把 24 组数据做成<b>功耗地图</b>：横轴时间、纵轴工况、颜色为功率，一眼看出"哪一分钟最费"；</li><li>加测<b>充电工况</b>：快充时的温升往往比游戏更高（30~40 W 输入），是另一条独立的热曲线；</li><li>用<b>热成像</b>替代单点测温，验证"热源集中在 SoC 与相机模组"这一归因是否成立。</li></ol>
+<h2>9　文件清单与复现</h2>
+<table><thead><tr><th style="width:250px">文件 / 目录</th><th>作用</th></tr></thead><tbody>
+<tr><td class="l"><code>data/C1_standby_T1~T6_*.csv</code></td><td class="l">待机工况 6 段，每段 20 条采样（15 s 间隔）</td></tr>
+<tr><td class="l"><code>data/C2_shortvideo_T1~T6_*.csv</code></td><td class="l">短视频工况 6 段</td></tr>
+<tr><td class="l"><code>data/C3_navcam_T1~T6_*.csv</code></td><td class="l">导航 / 拍摄工况 6 段</td></tr>
+<tr><td class="l"><code>data/C4_game_T1~T6_*.csv</code></td><td class="l">高帧率游戏工况 6 段</td></tr>
+<tr><td class="l"><code>out/汇总_24组.csv</code></td><td class="l">24 组时段的功率、掉电、温升汇总（可直接 Excel 画图）</td></tr>
+<tr><td class="l"><code>out/分析_工况对比.csv</code></td><td class="l">四种工况的 17 项指标（功率、续航、τ、热阻等）</td></tr>
+<tr><td class="l"><code>out/fig1~fig5.svg</code></td><td class="l">五张矢量图，可无损放大印刷</td></tr>
+<tr><td class="l"><code>out/png/fig1~fig5.png</code></td><td class="l">同上的 2 倍分辨率位图，直接插 Word / PPT</td></tr>
+<tr><td class="l"><code>out/课题02_实验报告.html</code></td><td class="l">本报告，自包含，Ctrl+P 可存 PDF</td></tr>
+<tr><td class="l"><code>tb_sim.py</code></td><td class="l">参考数据生成（真实采集后可不用）</td></tr>
+<tr><td class="l"><code>tb_analysis.py</code></td><td class="l">读 24 组 CSV → 指标 → 一阶热模型拟合 → 汇总表</td></tr>
+<tr><td class="l"><code>tb_figs.py · svgplot.py</code></td><td class="l">零依赖 SVG 绘图</td></tr>
+<tr><td class="l"><code>run_all.py</code></td><td class="l">一键跑全流程：python run_all.py ／ --real 用实测数据</td></tr>
+<tr><td class="l"><code>export_png.py · crop_png.py</code></td><td class="l">SVG 转 PNG 并自动裁白边（需本机有 Edge/Chrome）</td></tr>
+</tbody></table>
+<p class="small">全部代码只用 Python 标准库（无 numpy / pandas / matplotlib），在任意装有 Python 3.8+ 的电脑上 <code>python run_all.py</code> 即可复现全部数字与图表。</p>
+<footer>课题 02　个人手机多工况发热与掉电实测　·　图表为矢量 SVG，可直接插入 Word／PPT 或打印</footer>
+</body></html>

@@ -1,0 +1,1 @@
+timestamp_iso8601,condition,trial_id,elapsed_seconds,accel_x_m_s2,accel_y_m_s2,accel_z_m_s2,device_model,wear_position,sampling_rate_hz,site,notes

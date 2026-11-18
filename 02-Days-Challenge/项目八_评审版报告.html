@@ -1,0 +1,824 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>项目八 低成本智能交互辅具</title><style>
+*{box-sizing:border-box}
+body{margin:0 auto;padding:44px 54px 60px;max-width:1180px;background:#fff;color:#1e293b;
+ font-family:"Microsoft YaHei","PingFang SC","Source Han Sans SC",sans-serif;font-size:14.5px;line-height:1.75}
+h1{font-size:26px;margin:0 0 6px;letter-spacing:.3px}
+h1 .no{color:#0f766e}
+.meta{color:#64748b;font-size:13px;border-bottom:2px solid #e2e8f0;padding-bottom:13px;margin-bottom:24px}
+h2{font-size:18px;margin:36px 0 12px;padding-left:11px;border-left:4px solid #0f766e}
+h3{font-size:15px;margin:20px 0 8px}
+p{margin:8px 0}
+ul,ol{margin:8px 0 8px 4px;padding-left:22px}
+li{margin:5px 0}
+code{background:#f1f5f9;padding:1px 5px;border-radius:4px;font-size:13px;font-family:Consolas,monospace}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:12.5px}
+th,td{border:1px solid #e2e8f0;padding:6px 8px;text-align:center}
+th{background:#f8fafc;font-weight:600}
+td.l{text-align:left}
+tbody tr:nth-child(even){background:#fcfdff}
+.note{background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #d97706;padding:12px 16px;border-radius:6px;margin:16px 0;font-size:13.5px}
+.key{background:#f0fdfa;border:1px solid #99f6e4;border-left:4px solid #0f766e;padding:12px 16px;border-radius:6px;margin:16px 0}
+.warn{background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;padding:12px 16px;border-radius:6px;margin:16px 0}
+figure{margin:18px 0 24px}
+figure svg{width:100%;height:auto;display:block;border:1px solid #e8edf4;border-radius:8px}
+figcaption{color:#64748b;font-size:12.5px;margin-top:8px;text-align:center}
+.small{color:#64748b;font-size:12.5px}
+.cards{display:flex;gap:14px;margin:18px 0;flex-wrap:wrap}
+.card{flex:1;min-width:240px;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;background:#fcfdff}
+.card h4{margin:0 0 6px;font-size:14px;color:#0f766e}
+.card .big{font-size:24px;font-weight:700;color:#0f172a}
+.card .u{font-size:12px;color:#64748b;margin-left:3px}
+footer{margin-top:40px;padding-top:12px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px}
+@media print{body{padding:0;font-size:12px}h2{page-break-after:avoid}figure{page-break-inside:avoid}}
+</style></head><body>
+<h1><span class="no">项目八</span>　面向特定人群的低成本智能交互辅具</h1>
+<div class="meta">老年人服药提醒 ／ 听障人士敲门·水开提示 ／ 视障人士防烫倒水　｜　3 台原型 · 物料合计 ¥174 · 480 次盲操试验 · 4 轮迭代　｜　2026-11-18</div>
+<div class="key"><b>一句话：</b>给三类人群做了三件小东西——会说话的药盒、会震的手环、不会烫到你的杯子。全部<b>离线可用、单手可操作、单片成本 52–64 元</b>。在蒙眼 / 降噪耳塞 / 单手三种受限条件下各做 30 次盲操，药盒成功率从第一版 <b>43%</b> 提到 <b>93%</b>，中位耗时从 <b>42.5 s</b> 压到 <b>13.6 s</b>。</div>
+<div class="cards">
+<div class="card"><h4>D1 药盒 · 终版成功率</h4><div class="big">93<span class="u">%</span></div><div class="small">蒙眼条件，30 次</div></div>
+<div class="card"><h4>耗时压缩</h4><div class="big">68<span class="u">%</span></div><div class="small">42.5 s → 13.6 s</div></div>
+<div class="card"><h4>失败次数下降</h4><div class="big">89<span class="u">%</span></div><div class="small">90 次里 37 次失败 → 4 次</div></div>
+<div class="card"><h4>三台物料成本</h4><div class="big">174<span class="u">元</span></div><div class="small">商用同类单件 ¥99~399</div></div>
+</div>
+<h2>1　痛点调研：先搞清楚「为什么不用」，而不是「需不需要」</h2>
+<p>12 位深度访谈（老人 6 / 听障 3 / 视障 3）+ 入户观察 + 36 份问卷。核心发现是：<b>市场不缺产品，缺的是"敢用"</b>——受访者里 4 位买过智能药盒、3 位已弃用。</p>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="560" viewBox="0 0 1180 560">
+<rect width="1180" height="560" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">痛点调研：36 份问卷 + 12 位深度访谈</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">左：问卷中「经历过」的比例；右：12 位受访者的痛点按「发生频次 × 后果严重度」排位</text>
+<line x1="320.00" y1="108.00" x2="320.00" y2="448.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="420.00" y1="108.00" x2="420.00" y2="448.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="520.00" y1="108.00" x2="520.00" y2="448.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="620.00" y1="108.00" x2="620.00" y2="448.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="720.00" y1="108.00" x2="720.00" y2="448.00" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="320.00" y="108.00" width="400.00" height="340.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="320.00" y="463.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0</text>
+<text x="420.00" y="463.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">25</text>
+<text x="520.00" y="463.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">50</text>
+<text x="620.00" y="463.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">75</text>
+<text x="720.00" y="463.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">100</text>
+<text x="520.00" y="482.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal">选择人数占比 / %</text>
+<text x="320.00" y="98.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(a) 问卷关键结果（N=36）</text>
+<rect x="320.00" y="119.61" width="300.00" height="26.54" rx="3" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="626.00" y="136.88" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#dc2626" text-anchor="start" font-weight="bold">75%</text>
+<text x="306.00" y="136.88" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="end" font-weight="normal">过去一年有过漏服/重复服药</text>
+<rect x="320.00" y="161.07" width="166.67" height="26.54" rx="3" fill="#d97706" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="492.67" y="178.34" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#d97706" text-anchor="start" font-weight="bold">42%</text>
+<text x="306.00" y="178.34" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="end" font-weight="normal">看不清药盒上的字（老年人 N=18）</text>
+<rect x="320.00" y="202.54" width="100.00" height="26.54" rx="3" fill="#94a3b8" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="426.00" y="219.80" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#94a3b8" text-anchor="start" font-weight="bold">25%</text>
+<text x="306.00" y="219.80" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="end" font-weight="normal">因听不到敲门声错过访客/快递</text>
+<rect x="320.00" y="244.00" width="55.56" height="26.54" rx="3" fill="#94a3b8" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="381.56" y="261.27" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#94a3b8" text-anchor="start" font-weight="bold">14%</text>
+<text x="306.00" y="261.27" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="end" font-weight="normal">烧水时忘记导致干烧</text>
+<rect x="320.00" y="285.46" width="122.22" height="26.54" rx="3" fill="#94a3b8" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="448.22" y="302.73" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#94a3b8" text-anchor="start" font-weight="bold">31%</text>
+<text x="306.00" y="302.73" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="end" font-weight="normal">倒开水时被烫到过</text>
+<rect x="320.00" y="326.93" width="366.67" height="26.54" rx="3" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="692.67" y="344.20" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#dc2626" text-anchor="start" font-weight="bold">92%</text>
+<text x="306.00" y="344.20" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="end" font-weight="normal">愿意使用「只需按一下」的辅具</text>
+<rect x="320.00" y="368.39" width="322.22" height="26.54" rx="3" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="648.22" y="385.66" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#dc2626" text-anchor="start" font-weight="bold">81%</text>
+<text x="306.00" y="385.66" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="end" font-weight="normal">拒绝需要装 App / 连 Wi-Fi 的产品</text>
+<rect x="320.00" y="409.85" width="344.44" height="26.54" rx="3" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="670.44" y="427.12" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#dc2626" text-anchor="start" font-weight="bold">86%</text>
+<text x="306.00" y="427.12" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="end" font-weight="normal">可接受单价 ≤ 100 元</text>
+<line x1="834.62" y1="108.00" x2="834.62" y2="448.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="892.31" y1="108.00" x2="892.31" y2="448.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="950.00" y1="108.00" x2="950.00" y2="448.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="1007.69" y1="108.00" x2="1007.69" y2="448.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="1065.38" y1="108.00" x2="1065.38" y2="448.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="800.00" y1="421.85" x2="1100.00" y2="421.85" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="800.00" y1="356.46" x2="1100.00" y2="356.46" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="800.00" y1="291.08" x2="1100.00" y2="291.08" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="800.00" y1="225.69" x2="1100.00" y2="225.69" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="800.00" y1="160.31" x2="1100.00" y2="160.31" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="800.00" y="108.00" width="300.00" height="340.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="834.62" y="463.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">1</text>
+<text x="892.31" y="463.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">2</text>
+<text x="950.00" y="463.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">3</text>
+<text x="1007.69" y="463.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">4</text>
+<text x="1065.38" y="463.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">5</text>
+<text x="792.00" y="425.85" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">3</text>
+<text x="792.00" y="360.46" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">3.5</text>
+<text x="792.00" y="295.08" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">4</text>
+<text x="792.00" y="229.69" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">4.5</text>
+<text x="792.00" y="164.31" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">5</text>
+<text x="950.00" y="482.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal">发生频次（越大越常见）</text>
+<text x="754.00" y="278.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 754.00 278.00)">后果严重度（1-5）</text>
+<text x="800.00" y="98.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(b) 痛点优先级</text>
+<rect x="973.08" y="108.00" width="126.92" height="156.92" rx="0" fill="#dc2626" stroke="none" stroke-width="1" opacity="0.06"/>
+<text x="978.85" y="118.46" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#dc2626" text-anchor="start" font-weight="bold">优先攻克的区域</text>
+<circle cx="1064.12" cy="160.31" r="5" fill="#0f766e" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<circle cx="1023.04" cy="291.08" r="5" fill="#0f766e" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<circle cx="1060.31" cy="291.08" r="5" fill="#0f766e" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<circle cx="1065.38" cy="160.31" r="5" fill="#0f766e" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<circle cx="851.23" cy="160.31" r="5" fill="#0f766e" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<circle cx="819.27" cy="291.08" r="5" fill="#0f766e" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<circle cx="1043.58" cy="291.08" r="5" fill="#2563eb" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<circle cx="910.19" cy="160.31" r="5" fill="#2563eb" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<circle cx="1062.85" cy="421.85" r="5" fill="#2563eb" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<circle cx="998.69" cy="160.31" r="5" fill="#7c3aed" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<circle cx="1012.88" cy="291.08" r="5" fill="#7c3aed" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<circle cx="821.81" cy="291.08" r="5" fill="#7c3aed" stroke="#fff" stroke-width="1.2" opacity="0.9"/>
+<rect x="800.00" y="71.00" width="14.00" height="10.00" rx="2" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="820.00" y="80.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">老年人</text>
+<rect x="863.50" y="71.00" width="14.00" height="10.00" rx="2" fill="#2563eb" stroke="none" stroke-width="1"/>
+<text x="883.50" y="80.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">听障人士</text>
+<rect x="937.50" y="71.00" width="14.00" height="10.00" rx="2" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<text x="957.50" y="80.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">视障人士</text>
+</svg>
+<figcaption>图 1　左：问卷中"经历过"的比例；右：12 位受访者的痛点定位（频次 × 严重度）。</figcaption></figure>
+<table><thead><tr><th style="width:32px">#</th><th>从原话里长出来的洞察</th><th>推到设计上</th></tr></thead><tbody>
+<tr><td>1</td><td class="l">他们不是不会用，是<b>不敢错</b>（「拿错过一次，头晕了一下午」）</td><td class="l">错误必须可恢复：开错仓能被识别并纠正</td></tr>
+<tr><td>2</td><td class="l">多一道确认，就少一半用户（81% 拒绝装 App）</td><td class="l">设备离线自洽，联网只能是可选增强</td></tr>
+<tr><td>3</td><td class="l">提示通道不能只有一条（听不见 / 听见了也不知道是什么）</td><td class="l">看、听、触至少两条，每条都能独立完成任务</td></tr>
+<tr><td>4</td><td class="l">「单手」是被低估的约束（拧瓶盖、按卡扣都费劲）</td><td class="l">开合必须单手可完成，最好不用按</td></tr>
+<tr><td>5</td><td class="l">视障者要的是结论，不是数据（「别让我猜」）</td><td class="l">输出「能不能喝」，不输出「67 度」</td></tr>
+</tbody></table>
+<p class="small">完整转录见 <code>data/01_调研_访谈记录.csv</code>，需求优先级与设计原则推导见 <code>docs/01</code>。</p>
+<h2>2　三台原型：同一套骨架，三种用法</h2>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="660" viewBox="0 0 1180 660">
+<rect width="1180" height="660" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">三台原型的系统结构：同一套「感知—判断—多通道反馈」骨架</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">共同原则：任何一台设备，在失去视觉 / 听觉 / 双手中的任意一项时，仍能完成任务</text>
+<rect x="56.00" y="100.00" width="330.00" height="272.00" rx="12" fill="#f8fafc" stroke="#0f766e" stroke-width="1.6"/>
+<rect x="56.00" y="100.00" width="330.00" height="34.00" rx="12" fill="#0f766e" stroke="none" stroke-width="1"/>
+<rect x="56.00" y="120.00" width="330.00" height="14.00" rx="0" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="221.00" y="123.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="13.5" fill="#fff" text-anchor="middle" font-weight="bold">D1 智能药盒提醒器</text>
+<text x="221.00" y="150.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="middle" font-weight="normal">老年人 · 服药零门槛</text>
+<text x="72.00" y="176.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#0f766e" text-anchor="start" font-weight="bold">感知</text>
+<rect x="72.00" y="184.00" width="298.00" height="20.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="80.00" y="198.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">DS3231 实时时钟（到点触发）</text>
+<rect x="72.00" y="210.00" width="298.00" height="20.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="80.00" y="224.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">三个仓盖磁簧（判断开哪一格）</text>
+<rect x="72.00" y="236.00" width="298.00" height="20.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="80.00" y="250.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">12 mm 大按键（唯一操作）</text>
+<text x="72.00" y="276.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#0f766e" text-anchor="start" font-weight="bold">反馈通道</text>
+<rect x="72.00" y="284.00" width="298.00" height="19.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="80.00" y="297.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">视觉  仓位灯环呼吸，对应格闪</text>
+<rect x="72.00" y="308.00" width="298.00" height="19.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="80.00" y="321.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">听觉  预录人声：「吃白色药片 1 片」</text>
+<rect x="72.00" y="332.00" width="298.00" height="19.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="80.00" y="345.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">触觉  手腕带振动，节奏=早/中/晚</text>
+<rect x="410.00" y="100.00" width="330.00" height="272.00" rx="12" fill="#f8fafc" stroke="#2563eb" stroke-width="1.6"/>
+<rect x="410.00" y="100.00" width="330.00" height="34.00" rx="12" fill="#2563eb" stroke="none" stroke-width="1"/>
+<rect x="410.00" y="120.00" width="330.00" height="14.00" rx="0" fill="#2563eb" stroke="none" stroke-width="1"/>
+<text x="575.00" y="123.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="13.5" fill="#fff" text-anchor="middle" font-weight="bold">D2 环境声振动提示手环</text>
+<text x="575.00" y="150.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="middle" font-weight="normal">听障人士 · 敲门 / 水开</text>
+<text x="426.00" y="176.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#2563eb" text-anchor="start" font-weight="bold">感知</text>
+<rect x="426.00" y="184.00" width="298.00" height="20.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="434.00" y="198.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">MAX9814 麦克风（带 AGC）</text>
+<rect x="426.00" y="210.00" width="298.00" height="20.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="434.00" y="224.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">包络 + 过零率特征提取</text>
+<rect x="426.00" y="236.00" width="298.00" height="20.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="434.00" y="250.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">3 秒滑动窗节奏判别</text>
+<text x="426.00" y="276.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#2563eb" text-anchor="start" font-weight="bold">反馈通道</text>
+<rect x="426.00" y="284.00" width="298.00" height="19.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="434.00" y="297.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">触觉  3 短震=敲门，长震=水开</text>
+<rect x="426.00" y="308.00" width="298.00" height="19.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="434.00" y="321.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">视觉  红/蓝双色 LED 条</text>
+<rect x="426.00" y="332.00" width="298.00" height="19.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="434.00" y="345.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">无听觉  不依赖任何声音输出</text>
+<rect x="764.00" y="100.00" width="330.00" height="272.00" rx="12" fill="#f8fafc" stroke="#7c3aed" stroke-width="1.6"/>
+<rect x="764.00" y="100.00" width="330.00" height="34.00" rx="12" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<rect x="764.00" y="120.00" width="330.00" height="14.00" rx="0" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<text x="929.00" y="123.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="13.5" fill="#fff" text-anchor="middle" font-weight="bold">D3 防烫水杯引导器</text>
+<text x="929.00" y="150.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="middle" font-weight="normal">视障人士 · 倒水防烫</text>
+<text x="780.00" y="176.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#7c3aed" text-anchor="start" font-weight="bold">感知</text>
+<rect x="780.00" y="184.00" width="298.00" height="20.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="788.00" y="198.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">NTC 探头贴杯壁（测温）</text>
+<rect x="780.00" y="210.00" width="298.00" height="20.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="788.00" y="224.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">双铜箔电极（测水位）</text>
+<rect x="780.00" y="236.00" width="298.00" height="20.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="788.00" y="250.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">杯把压力开关（握持确认）</text>
+<text x="780.00" y="276.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#7c3aed" text-anchor="start" font-weight="bold">反馈通道</text>
+<rect x="780.00" y="284.00" width="298.00" height="19.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="788.00" y="297.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">触觉  杯把振动：越烫越快</text>
+<rect x="780.00" y="308.00" width="298.00" height="19.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="788.00" y="321.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">听觉  人声：「45 度，可以喝」</text>
+<rect x="780.00" y="332.00" width="298.00" height="19.00" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="788.00" y="345.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">视觉  杯口三色环（辅助旁人）</text>
+<text x="56.00" y="406.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">多通道冗余校验：任意删掉一个通道，任务是否仍可完成</text>
+<rect x="56.00" y="420.00" width="130.00" height="40.00" rx="0" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+<text x="121.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">任务</text>
+<rect x="186.00" y="420.00" width="130.00" height="40.00" rx="0" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+<text x="251.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">仅视觉</text>
+<rect x="316.00" y="420.00" width="130.00" height="40.00" rx="0" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+<text x="381.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">仅听觉</text>
+<rect x="446.00" y="420.00" width="130.00" height="40.00" rx="0" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+<text x="511.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">仅触觉</text>
+<rect x="576.00" y="420.00" width="130.00" height="40.00" rx="0" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+<text x="641.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">无视觉</text>
+<rect x="706.00" y="420.00" width="130.00" height="40.00" rx="0" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+<text x="771.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">无听觉</text>
+<rect x="836.00" y="420.00" width="130.00" height="40.00" rx="0" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+<text x="901.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">仅单手</text>
+<rect x="56.00" y="460.00" width="130.00" height="40.00" rx="0" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="121.00" y="486.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">D1 取对药</text>
+<rect x="186.00" y="460.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="251.00" y="486.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="316.00" y="460.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="381.00" y="486.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="446.00" y="460.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="511.00" y="486.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="576.00" y="460.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="641.00" y="486.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="706.00" y="460.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="771.00" y="486.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="836.00" y="460.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="901.00" y="486.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="56.00" y="500.00" width="130.00" height="40.00" rx="0" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="121.00" y="526.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">D2 判断声源</text>
+<rect x="186.00" y="500.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="251.00" y="526.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="316.00" y="500.00" width="130.00" height="40.00" rx="0" fill="#fef2f2" stroke="#e2e8f0" stroke-width="1"/>
+<text x="381.00" y="526.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#dc2626" text-anchor="middle" font-weight="bold">—</text>
+<rect x="446.00" y="500.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="511.00" y="526.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="576.00" y="500.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="641.00" y="526.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="706.00" y="500.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="771.00" y="526.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="836.00" y="500.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="901.00" y="526.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="56.00" y="540.00" width="130.00" height="40.00" rx="0" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="121.00" y="566.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">D3 倒水至 7 分</text>
+<rect x="186.00" y="540.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="251.00" y="566.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="316.00" y="540.00" width="130.00" height="40.00" rx="0" fill="#fef2f2" stroke="#e2e8f0" stroke-width="1"/>
+<text x="381.00" y="566.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#dc2626" text-anchor="middle" font-weight="bold">—</text>
+<rect x="446.00" y="540.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="511.00" y="566.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="576.00" y="540.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="641.00" y="566.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="706.00" y="540.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="771.00" y="566.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<rect x="836.00" y="540.00" width="130.00" height="40.00" rx="0" fill="#ecfdf5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="901.00" y="566.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="bold">✓</text>
+<text x="56.00" y="616.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">注：D2/D3 的「仅听觉」一列标「—」，因为它们本身就是为「听不见」设计的——这正是多通道设计的意义。</text>
+</svg>
+<figcaption>图 2　三原型的"感知—判断—多通道反馈"结构，以及冗余校验矩阵。</figcaption></figure>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="830" viewBox="0 0 1180 830">
+<rect width="1180" height="830" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">D1 装配爆炸图：6 层结构，可拆到螺丝级</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">层间用 4 颗 M2 铜柱 + 磁吸定位；任何一层坏了都能单独换，不必整机报废</text>
+<path d="M 430.0 77.0 L 580.0 152.0 L 430.0 227.0 L 280.0 152.0 Z" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<path d="M 280.0 152.0 L 430.0 227.0 L 430.0 253.0 L 280.0 178.0 Z" fill="#cbd5e1" stroke="#334155" stroke-width="1"/>
+<path d="M 430.0 227.0 L 580.0 152.0 L 580.0 178.0 L 430.0 253.0 Z" fill="#b8c4d4" stroke="#334155" stroke-width="1"/>
+<line x1="580.00" y1="152.00" x2="600.00" y2="142.00" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="580.00" cy="152.00" r="2.6" fill="#64748b" stroke="none" stroke-width="1"/>
+<text x="610.00" y="138.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="bold">① 顶盖 · 3 mm 亚克力激光切割</text>
+<text x="610.00" y="154.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">三色丝印区分早/中/晚，开孔露出灯环与按键</text>
+<path d="M 430.0 157.0 L 580.0 232.0 L 430.0 307.0 L 280.0 232.0 Z" fill="#bbf7d0" stroke="#334155" stroke-width="1"/>
+<path d="M 280.0 232.0 L 430.0 307.0 L 430.0 333.0 L 280.0 258.0 Z" fill="#86efac" stroke="#334155" stroke-width="1"/>
+<path d="M 430.0 307.0 L 580.0 232.0 L 580.0 258.0 L 430.0 333.0 Z" fill="#6ee7b7" stroke="#334155" stroke-width="1"/>
+<line x1="580.00" y1="232.00" x2="600.00" y2="222.00" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="580.00" cy="232.00" r="2.6" fill="#64748b" stroke="none" stroke-width="1"/>
+<text x="610.00" y="218.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="bold">② 灯环层 · WS2812B ×3</text>
+<text x="610.00" y="234.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">每仓 8 灯，导光柱把光引到仓盖边缘</text>
+<path d="M 430.0 237.0 L 580.0 312.0 L 430.0 387.0 L 280.0 312.0 Z" fill="#fed7aa" stroke="#334155" stroke-width="1"/>
+<path d="M 280.0 312.0 L 430.0 387.0 L 430.0 413.0 L 280.0 338.0 Z" fill="#fdba74" stroke="#334155" stroke-width="1"/>
+<path d="M 430.0 387.0 L 580.0 312.0 L 580.0 338.0 L 430.0 413.0 Z" fill="#fb923c" stroke="#334155" stroke-width="1"/>
+<line x1="580.00" y1="312.00" x2="600.00" y2="302.00" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="580.00" cy="312.00" r="2.6" fill="#64748b" stroke="none" stroke-width="1"/>
+<text x="610.00" y="298.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="bold">③ 药仓层 · 3D 打印 PLA</text>
+<text x="610.00" y="314.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">三格独立，每格底部磁簧，盖内侧贴编号凸点</text>
+<path d="M 430.0 317.0 L 580.0 392.0 L 430.0 467.0 L 280.0 392.0 Z" fill="#a5f3fc" stroke="#334155" stroke-width="1"/>
+<path d="M 280.0 392.0 L 430.0 467.0 L 430.0 493.0 L 280.0 418.0 Z" fill="#67e8f9" stroke="#334155" stroke-width="1"/>
+<path d="M 430.0 467.0 L 580.0 392.0 L 580.0 418.0 L 430.0 493.0 Z" fill="#22d3ee" stroke="#334155" stroke-width="1"/>
+<line x1="580.00" y1="392.00" x2="600.00" y2="382.00" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="580.00" cy="392.00" r="2.6" fill="#64748b" stroke="none" stroke-width="1"/>
+<text x="610.00" y="378.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="bold">④ 主控层 · ESP32-C3 + DS3231 + DFPlayer</text>
+<text x="610.00" y="394.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">所有接线用排针，可整层抽出更换</text>
+<path d="M 430.0 397.0 L 580.0 472.0 L 430.0 547.0 L 280.0 472.0 Z" fill="#ddd6fe" stroke="#334155" stroke-width="1"/>
+<path d="M 280.0 472.0 L 430.0 547.0 L 430.0 573.0 L 280.0 498.0 Z" fill="#c4b5fd" stroke="#334155" stroke-width="1"/>
+<path d="M 430.0 547.0 L 580.0 472.0 L 580.0 498.0 L 430.0 573.0 Z" fill="#a78bfa" stroke="#334155" stroke-width="1"/>
+<line x1="580.00" y1="472.00" x2="600.00" y2="462.00" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="580.00" cy="472.00" r="2.6" fill="#64748b" stroke="none" stroke-width="1"/>
+<text x="610.00" y="458.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="bold">⑤ 电源层 · 18650 + TP4056</text>
+<text x="610.00" y="474.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">Type-C 充电口从底壳侧面露出</text>
+<path d="M 430.0 477.0 L 580.0 552.0 L 430.0 627.0 L 280.0 552.0 Z" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<path d="M 280.0 552.0 L 430.0 627.0 L 430.0 653.0 L 280.0 578.0 Z" fill="#cbd5e1" stroke="#334155" stroke-width="1"/>
+<path d="M 430.0 627.0 L 580.0 552.0 L 580.0 578.0 L 430.0 653.0 Z" fill="#b8c4d4" stroke="#334155" stroke-width="1"/>
+<line x1="580.00" y1="552.00" x2="600.00" y2="542.00" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="580.00" cy="552.00" r="2.6" fill="#64748b" stroke="none" stroke-width="1"/>
+<text x="610.00" y="538.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="bold">⑥ 底壳 · 磁吸可拆</text>
+<text x="610.00" y="554.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">免螺丝换电池；四角硅胶垫防滑</text>
+<rect x="610.00" y="666.00" width="520.00" height="146.00" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="630.00" y="690.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#1e293b" text-anchor="start" font-weight="bold">装配顺序（普通人 25 分钟可完成）</text>
+<text x="630.00" y="712.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">1. 底壳装 4 颗 M2 铜柱 → 放电池层，接 JST 插头</text>
+<text x="630.00" y="731.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">2. 主控层对准铜柱压下，插好舵机/灯环/马达排线</text>
+<text x="630.00" y="750.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">3. 药仓层就位，三个磁簧贴片对准仓盖磁铁（间隙 ≤3 mm）</text>
+<text x="630.00" y="769.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">4. 灯环层盖在药仓上，导光柱对准仓盖透光孔</text>
+<text x="630.00" y="788.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">5. 顶盖合拢，四角磁吸自动对位；通电自检（三仓各闪一次）</text>
+<text x="60.00" y="700.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="start" font-weight="bold">成本可控的关键：6 层里有 4 层是标准模块</text>
+<text x="60.00" y="722.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="start" font-weight="normal">（灯环 / 主控 / 电源 / 时钟），只有药仓与顶盖</text>
+<text x="60.00" y="744.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="start" font-weight="normal">需要激光切割 + 3D 打印，单套加工费 ¥18。</text>
+<text x="60.00" y="776.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="start" font-weight="normal">拆装性也决定了维修性：现场坏一个舵机，</text>
+<text x="60.00" y="798.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="start" font-weight="normal">只需抽出第 ③ 层换件，不必整机返厂。</text>
+</svg>
+<figcaption>图 3　D1 的六层可拆结构。坏哪层换哪层，不必整机返废。</figcaption></figure>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="700" viewBox="0 0 1180 700">
+<rect width="1180" height="700" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">主原型接线图：ESP32-C3 + 时钟 + 三仓执行 + 三通道反馈</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">全部器件共 ¥58；杜邦线可插拔、无双面胶飞线——保证现场 5 分钟内能换件维修</text>
+<rect x="450.00" y="208.00" width="280.00" height="168.00" rx="12" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="590.00" y="238.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="14" fill="#fff" text-anchor="middle" font-weight="bold">ESP32-C3 SuperMini</text>
+<text x="590.00" y="260.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#ccfbf1" text-anchor="middle" font-weight="normal">3.3 V 逻辑 · 12 个可用 IO</text>
+<text x="462.00" y="290.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#ccfbf1" text-anchor="start" font-weight="normal">GPIO4   I²C-SDA</text>
+<text x="462.00" y="307.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#ccfbf1" text-anchor="start" font-weight="normal">GPIO5   I²C-SCL</text>
+<text x="462.00" y="324.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#ccfbf1" text-anchor="start" font-weight="normal">GPIO6   舵机 1~3</text>
+<text x="462.00" y="341.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#ccfbf1" text-anchor="start" font-weight="normal">GPIO1   DFPlayer TX</text>
+<text x="462.00" y="358.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#ccfbf1" text-anchor="start" font-weight="normal">3V3/GND 供电</text>
+<text x="718.00" y="290.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#ccfbf1" text-anchor="end" font-weight="normal">GPIO0   按键 ×3</text>
+<text x="718.00" y="307.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#ccfbf1" text-anchor="end" font-weight="normal">GPIO2   LED_DIN</text>
+<text x="718.00" y="324.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#ccfbf1" text-anchor="end" font-weight="normal">GPIO3   马达 PWM</text>
+<text x="718.00" y="341.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#ccfbf1" text-anchor="end" font-weight="normal">GPIO10  磁簧 ×3</text>
+<text x="718.00" y="358.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#ccfbf1" text-anchor="end" font-weight="normal">GND</text>
+<rect x="60.00" y="118.00" width="250.00" height="78.00" rx="8" fill="#fff" stroke="#0891b2" stroke-width="1.4"/>
+<text x="185.00" y="142.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#0891b2" text-anchor="middle" font-weight="bold">DS3231 实时时钟</text>
+<text x="185.00" y="161.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">I²C · 掉电走时 ±2 min/年</text>
+<line x1="310.00" y1="157.00" x2="448.00" y2="286.00" stroke="#0891b2" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/>
+<circle cx="448.00" cy="286.00" r="2.4" fill="#0891b2" stroke="none" stroke-width="1"/>
+<rect x="60.00" y="232.00" width="250.00" height="78.00" rx="8" fill="#fff" stroke="#7c3aed" stroke-width="1.4"/>
+<text x="185.00" y="256.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#7c3aed" text-anchor="middle" font-weight="bold">DFPlayer + 2W 喇叭</text>
+<text x="185.00" y="275.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">预录 12 段人声，无需联网</text>
+<line x1="310.00" y1="271.00" x2="448.00" y2="337.00" stroke="#7c3aed" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/>
+<circle cx="448.00" cy="337.00" r="2.4" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<rect x="60.00" y="346.00" width="250.00" height="78.00" rx="8" fill="#fff" stroke="#d97706" stroke-width="1.4"/>
+<text x="185.00" y="370.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#d97706" text-anchor="middle" font-weight="bold">三仓舵机 SG90 ×3</text>
+<text x="185.00" y="389.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">锁扣 0°=锁 / 90°=开</text>
+<line x1="310.00" y1="385.00" x2="448.00" y2="320.00" stroke="#d97706" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/>
+<circle cx="448.00" cy="320.00" r="2.4" fill="#d97706" stroke="none" stroke-width="1"/>
+<rect x="60.00" y="460.00" width="250.00" height="78.00" rx="8" fill="#fff" stroke="#64748b" stroke-width="1.4"/>
+<text x="185.00" y="484.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="bold">电池 18650 + TP4056</text>
+<text x="185.00" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">5 V 升压，实测续航 9 天</text>
+<line x1="310.00" y1="499.00" x2="448.00" y2="354.00" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/>
+<circle cx="448.00" cy="354.00" r="2.4" fill="#64748b" stroke="none" stroke-width="1"/>
+<rect x="870.00" y="118.00" width="250.00" height="78.00" rx="8" fill="#fff" stroke="#0f766e" stroke-width="1.4"/>
+<text x="995.00" y="142.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#0f766e" text-anchor="middle" font-weight="bold">12 mm 大按键 ×3</text>
+<text x="995.00" y="161.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">凸起键帽，可盲摸定位</text>
+<line x1="870.00" y1="157.00" x2="732.00" y2="286.00" stroke="#0f766e" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/>
+<circle cx="732.00" cy="286.00" r="2.4" fill="#0f766e" stroke="none" stroke-width="1"/>
+<rect x="870.00" y="232.00" width="250.00" height="78.00" rx="8" fill="#fff" stroke="#16a34a" stroke-width="1.4"/>
+<text x="995.00" y="256.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#16a34a" text-anchor="middle" font-weight="bold">WS2812B 灯环 ×3</text>
+<text x="995.00" y="275.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">8 灯 · 呼吸/常亮/闪</text>
+<line x1="870.00" y1="271.00" x2="732.00" y2="303.00" stroke="#16a34a" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/>
+<circle cx="732.00" cy="303.00" r="2.4" fill="#16a34a" stroke="none" stroke-width="1"/>
+<rect x="870.00" y="346.00" width="250.00" height="78.00" rx="8" fill="#fff" stroke="#be123c" stroke-width="1.4"/>
+<text x="995.00" y="370.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#be123c" text-anchor="middle" font-weight="bold">线性马达 ×1</text>
+<text x="995.00" y="389.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">手腕带，3 种节奏编码</text>
+<line x1="870.00" y1="385.00" x2="732.00" y2="320.00" stroke="#be123c" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/>
+<circle cx="732.00" cy="320.00" r="2.4" fill="#be123c" stroke="none" stroke-width="1"/>
+<rect x="870.00" y="460.00" width="250.00" height="78.00" rx="8" fill="#fff" stroke="#475569" stroke-width="1.4"/>
+<text x="995.00" y="484.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#475569" text-anchor="middle" font-weight="bold">仓盖磁簧 ×3</text>
+<text x="995.00" y="503.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">开盖即信号，无需按键</text>
+<line x1="870.00" y1="499.00" x2="732.00" y2="337.00" stroke="#475569" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/>
+<circle cx="732.00" cy="337.00" r="2.4" fill="#475569" stroke="none" stroke-width="1"/>
+<line x1="60.00" y1="564.00" x2="1120.00" y2="564.00" stroke="#e2e8f0" stroke-width="1"/>
+<text x="60.00" y="586.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="start" font-weight="bold">为什么选 ESP32-C3 而不是 Arduino Nano：</text>
+<text x="60.00" y="608.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">① 原生 3.3 V，省掉电平转换，接线少 6 根；</text>
+<text x="420.00" y="608.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">② 自带 BLE，家属手机可近场读取服药记录，不必连路由器；</text>
+<text x="780.00" y="608.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">③ ¥12.5，比 Nano + 蓝牙模块便宜近一半。</text>
+<text x="60.00" y="640.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="normal">接线要点：舵机三只并联供电，必须在 5 V 侧加 470 μF 电解电容，否则三仓同时开锁会让主控复位（第一版踩过的坑，见迭代记录 R1-③）。</text>
+</svg>
+<figcaption>图 4　主原型接线图。三只舵机并联 470 μF 电容是踩过坑之后的必要设计。</figcaption></figure>
+<h2>3　盲操测试：480 次试验，三种受限状态</h2>
+<p><b>模拟方式</b>：蒙眼＝不透光眼罩；降噪＝3M 1110 耳塞（NRR≈29 dB）+ 85 dB 白噪底；单手＝惯用手反绑。全程不涉及真实服药（药盒内是糖片），被试可随时喊停。</p>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="580" viewBox="0 0 1180 580">
+<rect width="1180" height="580" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">盲操成功率：每轮 30 次，共 480 次试验</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">虚线为 90% 达标线；D2/D3 只做基线与终版对比，D1 做了完整四轮</text>
+<line x1="184.29" y1="130.00" x2="184.29" y2="480.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="308.10" y1="130.00" x2="308.10" y2="480.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="431.90" y1="130.00" x2="431.90" y2="480.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="555.71" y1="130.00" x2="555.71" y2="480.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="480.00" x2="630.00" y2="480.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="415.19" x2="630.00" y2="415.19" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="350.37" x2="630.00" y2="350.37" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="285.56" x2="630.00" y2="285.56" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="220.74" x2="630.00" y2="220.74" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="155.93" x2="630.00" y2="155.93" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="110.00" y="130.00" width="520.00" height="350.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="184.29" y="495.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0</text>
+<text x="308.10" y="495.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">1</text>
+<text x="431.90" y="495.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">2</text>
+<text x="555.71" y="495.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">3</text>
+<text x="102.00" y="484.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">0</text>
+<text x="102.00" y="419.19" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">20</text>
+<text x="102.00" y="354.37" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">40</text>
+<text x="102.00" y="289.56" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">60</text>
+<text x="102.00" y="224.74" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">80</text>
+<text x="102.00" y="159.93" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">100</text>
+<text x="370.00" y="514.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal">迭代轮次</text>
+<text x="64.00" y="305.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 64.00 305.00)">成功率 / %</text>
+<text x="110.00" y="120.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(a) D1 智能药盒（四轮完整迭代）</text>
+<line x1="110.00" y1="188.33" x2="630.00" y2="188.33" stroke="#dc2626" stroke-width="1.3" stroke-dasharray="5 4"/>
+<text x="122.38" y="177.31" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#dc2626" text-anchor="start" font-weight="bold">达标线 90%</text>
+<rect x="138.48" y="339.57" width="27.24" height="140.43" rx="2" fill="#7c3aed" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="152.10" y="334.57" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#7c3aed" text-anchor="middle" font-weight="bold">43</text>
+<rect x="262.29" y="220.74" width="27.24" height="259.26" rx="2" fill="#7c3aed" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="275.90" y="215.74" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#7c3aed" text-anchor="middle" font-weight="bold">80</text>
+<rect x="386.10" y="166.73" width="27.24" height="313.27" rx="2" fill="#7c3aed" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="399.71" y="161.73" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#7c3aed" text-anchor="middle" font-weight="bold">97</text>
+<rect x="509.90" y="177.53" width="27.24" height="302.47" rx="2" fill="#7c3aed" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="523.52" y="172.53" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#7c3aed" text-anchor="middle" font-weight="bold">93</text>
+<rect x="170.67" y="253.15" width="27.24" height="226.85" rx="2" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="184.29" y="248.15" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#2563eb" text-anchor="middle" font-weight="bold">70</text>
+<rect x="294.48" y="188.33" width="27.24" height="291.67" rx="2" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="308.10" y="183.33" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#2563eb" text-anchor="middle" font-weight="bold">90</text>
+<rect x="418.29" y="188.33" width="27.24" height="291.67" rx="2" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="431.90" y="183.33" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#2563eb" text-anchor="middle" font-weight="bold">90</text>
+<rect x="542.10" y="166.73" width="27.24" height="313.27" rx="2" fill="#2563eb" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="555.71" y="161.73" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#2563eb" text-anchor="middle" font-weight="bold">97</text>
+<rect x="202.86" y="274.75" width="27.24" height="205.25" rx="2" fill="#0f766e" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="216.48" y="269.75" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#0f766e" text-anchor="middle" font-weight="bold">63</text>
+<rect x="326.67" y="242.35" width="27.24" height="237.65" rx="2" fill="#0f766e" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="340.29" y="237.35" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#0f766e" text-anchor="middle" font-weight="bold">73</text>
+<rect x="450.48" y="209.94" width="27.24" height="270.06" rx="2" fill="#0f766e" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="464.10" y="204.94" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#0f766e" text-anchor="middle" font-weight="bold">83</text>
+<rect x="574.29" y="166.73" width="27.24" height="313.27" rx="2" fill="#0f766e" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="587.90" y="161.73" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9" fill="#0f766e" text-anchor="middle" font-weight="bold">97</text>
+<rect x="110.00" y="77.00" width="14.00" height="10.00" rx="2" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<text x="130.00" y="86.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">蒙眼</text>
+<rect x="167.00" y="77.00" width="14.00" height="10.00" rx="2" fill="#2563eb" stroke="none" stroke-width="1"/>
+<text x="187.00" y="86.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">降噪耳塞</text>
+<rect x="245.00" y="77.00" width="14.00" height="10.00" rx="2" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="265.00" y="86.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">单手</text>
+<line x1="760.00" y1="480.00" x2="1110.00" y2="480.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="760.00" y1="415.19" x2="1110.00" y2="415.19" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="760.00" y1="350.37" x2="1110.00" y2="350.37" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="760.00" y1="285.56" x2="1110.00" y2="285.56" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="760.00" y1="220.74" x2="1110.00" y2="220.74" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="760.00" y1="155.93" x2="1110.00" y2="155.93" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="760.00" y="130.00" width="350.00" height="350.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="752.00" y="484.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">0</text>
+<text x="752.00" y="419.19" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">20</text>
+<text x="752.00" y="354.37" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">40</text>
+<text x="752.00" y="289.56" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">60</text>
+<text x="752.00" y="224.74" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">80</text>
+<text x="752.00" y="159.93" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">100</text>
+<text x="760.00" y="120.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(b) D2 / D3 基线 vs 终版</text>
+<line x1="760.00" y1="188.33" x2="1110.00" y2="188.33" stroke="#dc2626" stroke-width="1.3" stroke-dasharray="5 4"/>
+<rect x="877.50" y="253.15" width="31.67" height="226.85" rx="2" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="893.33" y="247.15" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#cbd5e1" text-anchor="middle" font-weight="bold">70%</text>
+<text x="893.33" y="495.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">R0</text>
+<rect x="914.17" y="177.53" width="31.67" height="302.47" rx="2" fill="#2563eb" stroke="none" stroke-width="1"/>
+<text x="930.00" y="171.53" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#2563eb" text-anchor="middle" font-weight="bold">93%</text>
+<text x="930.00" y="495.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">R3</text>
+<text x="911.67" y="512.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">D2 手环</text>
+<rect x="1010.83" y="307.16" width="31.67" height="172.84" rx="2" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="1026.67" y="301.16" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#cbd5e1" text-anchor="middle" font-weight="bold">53%</text>
+<text x="1026.67" y="495.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">R0</text>
+<rect x="1047.50" y="166.73" width="31.67" height="313.27" rx="2" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<text x="1063.33" y="160.73" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#7c3aed" text-anchor="middle" font-weight="bold">97%</text>
+<text x="1063.33" y="495.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="normal">R3</text>
+<text x="1045.00" y="512.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e293b" text-anchor="middle" font-weight="bold">D3 水杯</text>
+<text x="110.00" y="562.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="normal">读数：D1 在「蒙眼」条件下 43% → 93%，翻了一倍多；D2 的提升最大（70% → 93%），因为它把「听」换成了「震」。</text>
+</svg>
+<figcaption>图 5　成功率随迭代变化；虚线为 90% 达标线。</figcaption></figure>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="560" viewBox="0 0 1180 560">
+<rect width="1180" height="560" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">完成耗时：成功率见顶之后，才是真正的体验战场</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">箱体为四分位区间，红线为中位数，须为 5%~95% 分位；仅统计 D1 三条件合并</text>
+<line x1="184.29" y1="108.00" x2="184.29" y2="468.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="308.10" y1="108.00" x2="308.10" y2="468.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="431.90" y1="108.00" x2="431.90" y2="468.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="555.71" y1="108.00" x2="555.71" y2="468.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="468.00" x2="630.00" y2="468.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="416.57" x2="630.00" y2="416.57" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="365.14" x2="630.00" y2="365.14" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="313.71" x2="630.00" y2="313.71" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="262.29" x2="630.00" y2="262.29" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="210.86" x2="630.00" y2="210.86" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="110.00" y1="159.43" x2="630.00" y2="159.43" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="110.00" y="108.00" width="520.00" height="360.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="184.29" y="483.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0</text>
+<text x="308.10" y="483.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">1</text>
+<text x="431.90" y="483.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">2</text>
+<text x="555.71" y="483.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">3</text>
+<text x="102.00" y="472.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">0</text>
+<text x="102.00" y="420.57" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">10</text>
+<text x="102.00" y="369.14" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">20</text>
+<text x="102.00" y="317.71" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">30</text>
+<text x="102.00" y="266.29" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">40</text>
+<text x="102.00" y="214.86" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">50</text>
+<text x="102.00" y="163.43" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">60</text>
+<text x="370.00" y="502.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal">迭代轮次</text>
+<text x="64.00" y="288.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 64.00 288.00)">耗时 / s</text>
+<text x="110.00" y="98.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(a) D1 耗时分布（n=90/轮）</text>
+<line x1="110.00" y1="390.86" x2="630.00" y2="390.86" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="128.57" y="383.66" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#dc2626" text-anchor="start" font-weight="bold">达标线 15 s</text>
+<line x1="184.29" y1="343.80" x2="184.29" y2="33.92" stroke="#475569" stroke-width="1.2"/>
+<line x1="169.43" y1="33.92" x2="199.14" y2="33.92" stroke="#475569" stroke-width="1.2"/>
+<line x1="169.43" y1="343.80" x2="199.14" y2="343.80" stroke="#475569" stroke-width="1.2"/>
+<rect x="152.10" y="190.03" width="64.38" height="108.26" rx="2" fill="#cbd5e1" stroke="#334155" stroke-width="1" opacity="0.85"/>
+<line x1="152.10" y1="260.23" x2="216.48" y2="260.23" stroke="#dc2626" stroke-width="2"/>
+<text x="184.29" y="25.92" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="middle" font-weight="bold">40.4s</text>
+<line x1="308.10" y1="379.93" x2="308.10" y2="218.34" stroke="#475569" stroke-width="1.2"/>
+<line x1="293.24" y1="218.34" x2="322.95" y2="218.34" stroke="#475569" stroke-width="1.2"/>
+<line x1="293.24" y1="379.93" x2="322.95" y2="379.93" stroke="#475569" stroke-width="1.2"/>
+<rect x="275.90" y="281.19" width="64.38" height="68.40" rx="2" fill="#7dd3fc" stroke="#334155" stroke-width="1" opacity="0.85"/>
+<line x1="275.90" y1="325.03" x2="340.29" y2="325.03" stroke="#dc2626" stroke-width="2"/>
+<text x="308.10" y="210.34" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="middle" font-weight="bold">27.8s</text>
+<line x1="431.90" y1="400.27" x2="431.90" y2="301.81" stroke="#475569" stroke-width="1.2"/>
+<line x1="417.05" y1="301.81" x2="446.76" y2="301.81" stroke="#475569" stroke-width="1.2"/>
+<line x1="417.05" y1="400.27" x2="446.76" y2="400.27" stroke="#475569" stroke-width="1.2"/>
+<rect x="399.71" y="341.10" width="64.38" height="41.01" rx="2" fill="#3b82f6" stroke="#334155" stroke-width="1" opacity="0.85"/>
+<line x1="399.71" y1="360.77" x2="464.10" y2="360.77" stroke="#dc2626" stroke-width="2"/>
+<text x="431.90" y="293.81" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="middle" font-weight="bold">20.9s</text>
+<line x1="555.71" y1="424.05" x2="555.71" y2="369.33" stroke="#475569" stroke-width="1.2"/>
+<line x1="540.86" y1="369.33" x2="570.57" y2="369.33" stroke="#475569" stroke-width="1.2"/>
+<line x1="540.86" y1="424.05" x2="570.57" y2="424.05" stroke="#475569" stroke-width="1.2"/>
+<rect x="523.52" y="389.44" width="64.38" height="23.91" rx="2" fill="#1e3a8a" stroke="#334155" stroke-width="1" opacity="0.85"/>
+<line x1="523.52" y1="401.66" x2="587.90" y2="401.66" stroke="#dc2626" stroke-width="2"/>
+<text x="555.71" y="361.33" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="middle" font-weight="bold">12.9s</text>
+<line x1="792.86" y1="108.00" x2="792.86" y2="468.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="880.95" y1="108.00" x2="880.95" y2="468.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="969.05" y1="108.00" x2="969.05" y2="468.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="1057.14" y1="108.00" x2="1057.14" y2="468.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="740.00" y1="468.00" x2="1110.00" y2="468.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="740.00" y1="396.00" x2="1110.00" y2="396.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="740.00" y1="324.00" x2="1110.00" y2="324.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="740.00" y1="252.00" x2="1110.00" y2="252.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="740.00" y1="180.00" x2="1110.00" y2="180.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="740.00" y1="108.00" x2="1110.00" y2="108.00" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="740.00" y="108.00" width="370.00" height="360.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="792.86" y="483.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0</text>
+<text x="880.95" y="483.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">1</text>
+<text x="969.05" y="483.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">2</text>
+<text x="1057.14" y="483.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">3</text>
+<text x="732.00" y="472.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">0</text>
+<text x="732.00" y="400.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">10</text>
+<text x="732.00" y="328.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">20</text>
+<text x="732.00" y="256.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">30</text>
+<text x="732.00" y="184.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">40</text>
+<text x="732.00" y="112.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">50</text>
+<text x="925.00" y="502.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal">迭代轮次</text>
+<text x="694.00" y="288.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 694.00 288.00)">中位耗时 / s</text>
+<text x="740.00" y="98.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(b) 分条件看瓶颈</text>
+<polyline points="792.86,162.36 880.95,260.64 969.05,313.56 1057.14,370.08" fill="none" stroke="#7c3aed" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="792.86" cy="162.36" r="3.4" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<circle cx="880.95" cy="260.64" r="3.4" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<circle cx="969.05" cy="313.56" r="3.4" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<circle cx="1057.14" cy="370.08" r="3.4" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<polyline points="792.86,203.04 880.95,289.08 969.05,329.40 1057.14,384.84" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="792.86" cy="203.04" r="3.4" fill="#2563eb" stroke="none" stroke-width="1"/>
+<circle cx="880.95" cy="289.08" r="3.4" fill="#2563eb" stroke="none" stroke-width="1"/>
+<circle cx="969.05" cy="329.40" r="3.4" fill="#2563eb" stroke="none" stroke-width="1"/>
+<circle cx="1057.14" cy="384.84" r="3.4" fill="#2563eb" stroke="none" stroke-width="1"/>
+<polyline points="792.86,171.36 880.95,219.96 969.05,314.28 1057.14,369.72" fill="none" stroke="#0f766e" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="792.86" cy="171.36" r="3.4" fill="#0f766e" stroke="none" stroke-width="1"/>
+<circle cx="880.95" cy="219.96" r="3.4" fill="#0f766e" stroke="none" stroke-width="1"/>
+<circle cx="969.05" cy="314.28" r="3.4" fill="#0f766e" stroke="none" stroke-width="1"/>
+<circle cx="1057.14" cy="369.72" r="3.4" fill="#0f766e" stroke="none" stroke-width="1"/>
+<rect x="740.00" y="123.00" width="14.00" height="10.00" rx="2" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<text x="760.00" y="132.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">蒙眼</text>
+<rect x="795.00" y="123.00" width="14.00" height="10.00" rx="2" fill="#2563eb" stroke="none" stroke-width="1"/>
+<text x="815.00" y="132.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">降噪耳塞</text>
+<rect x="871.00" y="123.00" width="14.00" height="10.00" rx="2" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="891.00" y="132.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">单手</text>
+<text x="110.00" y="542.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="normal">单手操作（青线）始终是最慢的——少一只手，连拧开盖子都成了问题，这条线最终卡在 14 s 就是方案的天花板。</text>
+</svg>
+<figcaption>图 6　耗时分布：成功率见顶之后，真正的战场在耗时。</figcaption></figure>
+<table><thead><tr><th>原型</th><th>条件</th><th>R0</th><th>R1</th><th>R2</th><th>R3</th><th>中位耗时 R0→R3</th></tr></thead><tbody>
+<tr><td>D1 药盒</td><td>蒙眼</td><td>43%</td><td>80%</td><td>97%</td><td>93%</td><td>42.5 → 13.6 s</td></tr>
+<tr><td>D1 药盒</td><td>降噪</td><td>70%</td><td>90%</td><td>90%</td><td>97%</td><td>36.8 → 11.6 s</td></tr>
+<tr><td>D1 药盒</td><td>单手</td><td>63%</td><td>73%</td><td>83%</td><td>97%</td><td>41.2 → 13.7 s</td></tr>
+<tr><td>D2 手环</td><td>降噪</td><td>70%</td><td>—</td><td>—</td><td>93%</td><td>25.4 → 10.5 s</td></tr>
+<tr><td>D3 水杯</td><td>蒙眼</td><td>53%</td><td>—</td><td>—</td><td>97%</td><td>40.0 → 13.8 s</td></tr>
+</tbody></table>
+<div class="warn"><b>一个必须说清的统计细节：</b>D1 蒙眼条件下 R2 是 97%、R3 是 93%，看起来「退步」了。但两比例检验得 <b>z = −0.59，p = 0.55</b>，在 n=30（95% CI 约 ±7 pp）时两者统计上无法区分。<b>第三轮的真实收益在耗时上</b>：21.4 s → 13.6 s（−36%），单手条件成功率同时从 83% 提到 97%。只看成功率会误判「第三轮白做了」。</div>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="540" viewBox="0 0 1180 540">
+<rect width="1180" height="540" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">误操作从哪来，又被哪一轮改掉的</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">统计 D1 智能药盒全部三条件的误操作类型；同一类型在 R0 与 R3 的对比，就是迭代的靶心</text>
+<line x1="150.00" y1="428.00" x2="930.00" y2="428.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="150.00" y1="362.43" x2="930.00" y2="362.43" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="150.00" y1="296.85" x2="930.00" y2="296.85" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="150.00" y1="231.28" x2="930.00" y2="231.28" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="150.00" y1="165.70" x2="930.00" y2="165.70" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="150.00" y="108.00" width="780.00" height="320.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="142.00" y="432.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">0</text>
+<text x="142.00" y="366.43" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">5</text>
+<text x="142.00" y="300.85" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">10</text>
+<text x="142.00" y="235.28" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">15</text>
+<text x="142.00" y="169.70" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">20</text>
+<text x="104.00" y="268.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 104.00 268.00)">误操作出现次数</text>
+<rect x="176.52" y="165.70" width="51.48" height="262.30" rx="2" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="202.26" y="159.70" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#475569" text-anchor="middle" font-weight="bold">20</text>
+<rect x="228.00" y="414.89" width="51.48" height="13.11" rx="2" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="253.74" y="408.89" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#0f766e" text-anchor="middle" font-weight="bold">1</text>
+<text x="228.00" y="446.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#94a3b8" text-anchor="middle" font-weight="normal">54%</text>
+<text x="228.00" y="464.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="middle" font-weight="normal">开错药仓</text>
+<rect x="332.52" y="349.31" width="51.48" height="78.69" rx="2" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="358.26" y="343.31" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#475569" text-anchor="middle" font-weight="bold">6</text>
+<rect x="384.00" y="428.00" width="51.48" height="0.00" rx="2" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="409.74" y="422.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#0f766e" text-anchor="middle" font-weight="bold">0</text>
+<text x="384.00" y="446.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#94a3b8" text-anchor="middle" font-weight="normal">16%</text>
+<text x="384.00" y="464.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="middle" font-weight="normal">药片掉落</text>
+<rect x="488.52" y="362.43" width="51.48" height="65.57" rx="2" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="514.26" y="356.43" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#475569" text-anchor="middle" font-weight="bold">5</text>
+<rect x="540.00" y="414.89" width="51.48" height="13.11" rx="2" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="565.74" y="408.89" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#0f766e" text-anchor="middle" font-weight="bold">1</text>
+<text x="540.00" y="446.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#94a3b8" text-anchor="middle" font-weight="normal">14%</text>
+<text x="540.00" y="464.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="middle" font-weight="normal">超时未取</text>
+<rect x="644.52" y="375.54" width="51.48" height="52.46" rx="2" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="670.26" y="369.54" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#475569" text-anchor="middle" font-weight="bold">4</text>
+<rect x="696.00" y="401.77" width="51.48" height="26.23" rx="2" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="721.74" y="395.77" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#0f766e" text-anchor="middle" font-weight="bold">2</text>
+<text x="696.00" y="446.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#94a3b8" text-anchor="middle" font-weight="normal">11%</text>
+<text x="696.00" y="464.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="middle" font-weight="normal">重复按键</text>
+<rect x="800.52" y="401.77" width="51.48" height="26.23" rx="2" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="826.26" y="395.77" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#475569" text-anchor="middle" font-weight="bold">2</text>
+<rect x="852.00" y="428.00" width="51.48" height="0.00" rx="2" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="877.74" y="422.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#0f766e" text-anchor="middle" font-weight="bold">0</text>
+<text x="852.00" y="446.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#94a3b8" text-anchor="middle" font-weight="normal">5%</text>
+<text x="852.00" y="464.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="middle" font-weight="normal">仓盖未复位</text>
+<rect x="150.00" y="109.00" width="14.00" height="10.00" rx="2" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<text x="170.00" y="118.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">R0 基线（90 次）</text>
+<rect x="309.27" y="109.00" width="14.00" height="10.00" rx="2" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="329.27" y="118.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#1e293b" text-anchor="start" font-weight="normal">R3 终版（90 次）</text>
+<text x="46.00" y="524.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="start" font-weight="normal">读法：R0 里「开错药仓」一家占 54%，到 R3 几乎归零——因为加了凸点编号与开错回退；剩下的是「药片掉落」这类纯手部能力问题，改结构解决不了，得靠辅具（药勺/防洒托盘）。</text>
+</svg>
+<figcaption>图 7　误操作类型帕累托：R0 里"开错药仓"一家占 54%，到 R3 几乎归零。</figcaption></figure>
+<h2>4　四轮防呆迭代：让错误发生不了</h2>
+<p>每轮只做四步：<b>看录像找"卡住的那 3 秒" → 归因（看不见？看不懂？手做不到？）→ 改结构优先于改提示 → 全部 30 次重测</b>。改动按"三级防呆"分级：L1 物理上做不到错 &gt; L2 一眼一摸就知道 &gt; L3 错了能回来。</p>
+<table><thead><tr><th style="width:52px">轮次</th><th style="width:82px">主题</th><th>关键改动</th><th style="width:56%">为什么这么改</th></tr></thead><tbody>
+<tr><td><b>R0</b></td><td>跑通</td><td class="l">三仓 + 蜂鸣器 + 卡扣 + 确认键</td><td class="l">最低实现。结果 43%——摸不到格子、按掉闹钟、抠不开盖</td></tr>
+<tr><td><b>R1</b></td><td>能用</td><td class="l">开盖即确认（取消确认键）／凸点编码／舵机开锁</td><td class="l">把「确认」这个动作整个删掉，就没有「误确认」；补上触觉与颜色两条通道</td></tr>
+<tr><td><b>R2</b></td><td>错得起</td><td class="l">开错语音纠正＋红灯回退／仓底斜坡导流／三级超时升级</td><td class="l">R1 有 9 次开错后直接把错药吃了——开错时系统是静默的，用户不知道错了</td></tr>
+<tr><td><b>R3</b></td><td>双通道</td><td class="l">振动节奏编码 1/2/3 短震／弱磁吸免抠盖／语音压到 4 s</td><td class="l">R2 的纠正只走语音，降噪时完全失效——每条信息都必须有第二条通道</td></tr>
+</tbody></table>
+<h3>4.1　被放弃的四个方案（比成功案例更有信息量）</h3>
+<table><thead><tr><th style="width:180px">方案</th><th>放弃原因</th></tr></thead><tbody>
+<tr><td class="l">加 OLED 屏显示药名</td><td class="l">蒙眼用不上、老人看不清小字、+¥25，且让设备「更像电子产品」（6 人排斥）</td></tr>
+<tr><td class="l">手机 App 推送提醒</td><td class="l">8 位老人中 6 位拒绝；问卷 36 人中 29 人拒绝装 App —— 与「零配置」原则冲突</td></tr>
+<tr><td class="l">指纹识别确认取药</td><td class="l">单手 + 手抖条件下识别失败率 42%</td></tr>
+<tr><td class="l">语音说「我吃了」确认</td><td class="l">厨房噪声下识别率 <70%，且 5 位老人不愿意对机器说话</td></tr>
+</tbody></table>
+<h3>4.2　24 项改动，与一个不太好听的结果</h3>
+<p>迭代的证据不止成功率。仓库里 <code>data/05</code> 把 24 项改动逐条记成一行（现象 → 证据 → 根因 → 防呆级别 → 改动 → 改前/改后 → 新引入的问题），<code>data/06</code> 把每个「原型 × 条件 × 轮次」的指标算成一行，两张表用编号互相引用。把 480 次试验按「<b>成功且全程未走错</b>」再统计一次：</p>
+<table><thead><tr><th style="width:70px">轮次</th><th>成功率</th><th>一次做对率</th><th>自我纠正率</th><th>两者之差</th></tr></thead><tbody>
+<tr><td><b>R0</b></td><td>58.9%</td><td>54.4%</td><td>8%</td><td>4 pp</td></tr>
+<tr><td><b>R1</b></td><td>81.1%</td><td>71.1%</td><td>12%</td><td>10 pp</td></tr>
+<tr><td><b>R2</b></td><td>90.0%</td><td>76.7%</td><td>15%</td><td>13 pp</td></tr>
+<tr><td><b>R3</b></td><td>95.6%</td><td>76.7%</td><td>20%</td><td>19 pp</td></tr>
+</tbody></table>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="600" viewBox="0 0 1180 600">
+<rect width="1180" height="600" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">迭代收益的归因：成功率涨了 37 pp，一次做对率只涨 22 pp</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">24 项改动 · 4 轮 · 480 次盲操；一次做对率 = 成功且全程未走错的比例</text>
+<line x1="118.00" y1="429.80" x2="570.00" y2="429.80" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="118.00" y1="389.56" x2="570.00" y2="389.56" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="118.00" y1="349.32" x2="570.00" y2="349.32" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="118.00" y1="309.07" x2="570.00" y2="309.07" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="118.00" y1="268.83" x2="570.00" y2="268.83" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="118.00" y1="228.59" x2="570.00" y2="228.59" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="118.00" y1="188.34" x2="570.00" y2="188.34" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="118.00" y1="148.10" x2="570.00" y2="148.10" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="118.00" y="132.00" width="452.00" height="330.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="110.00" y="433.80" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">-40</text>
+<text x="110.00" y="393.56" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">-30</text>
+<text x="110.00" y="353.32" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">-20</text>
+<text x="110.00" y="313.07" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">-10</text>
+<text x="110.00" y="272.83" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">0</text>
+<text x="110.00" y="232.59" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">10</text>
+<text x="110.00" y="192.34" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">20</text>
+<text x="110.00" y="152.10" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">30</text>
+<text x="72.00" y="297.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 72.00 297.00)">相对上一轮的变化 / %</text>
+<text x="118.00" y="122.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(a) 每轮投入与回报</text>
+<line x1="118.00" y1="268.83" x2="570.00" y2="268.83" stroke="#334155" stroke-width="1.2"/>
+<rect x="166.83" y="179.40" width="33.48" height="89.43" rx="2" fill="#0f766e" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="183.57" y="172.40" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#0f766e" text-anchor="middle" font-weight="bold">+22 pp</text>
+<rect x="208.68" y="394.34" width="33.48" height="-125.51" rx="2" fill="#d97706" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="225.42" y="409.34" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#d97706" text-anchor="middle" font-weight="bold">-31%</text>
+<text x="204.49" y="482.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="middle" font-weight="bold">R1</text>
+<text x="204.49" y="498.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="middle" font-weight="normal">能用</text>
+<text x="204.49" y="513.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#94a3b8" text-anchor="middle" font-weight="normal">3 项改动</text>
+<rect x="306.33" y="233.06" width="33.48" height="35.77" rx="2" fill="#0f766e" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="323.07" y="226.06" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#0f766e" text-anchor="middle" font-weight="bold">+9 pp</text>
+<rect x="348.19" y="369.44" width="33.48" height="-100.61" rx="2" fill="#d97706" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="364.93" y="384.44" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#d97706" text-anchor="middle" font-weight="bold">-25%</text>
+<text x="344.00" y="482.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="middle" font-weight="bold">R2</text>
+<text x="344.00" y="498.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="middle" font-weight="normal">错得起</text>
+<text x="344.00" y="513.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#94a3b8" text-anchor="middle" font-weight="normal">4 项改动</text>
+<rect x="445.84" y="246.47" width="33.48" height="22.36" rx="2" fill="#0f766e" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="462.58" y="239.47" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#0f766e" text-anchor="middle" font-weight="bold">+6 pp</text>
+<rect x="487.69" y="422.28" width="33.48" height="-153.45" rx="2" fill="#d97706" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="504.43" y="437.28" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#d97706" text-anchor="middle" font-weight="bold">-38%</text>
+<text x="483.51" y="482.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="middle" font-weight="bold">R3</text>
+<text x="483.51" y="498.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#64748b" text-anchor="middle" font-weight="normal">双通道</text>
+<text x="483.51" y="513.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#94a3b8" text-anchor="middle" font-weight="normal">5 项改动</text>
+<rect x="118.00" y="91.00" width="14.00" height="10.00" rx="2" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="138.00" y="100.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">Δ 成功率（pp）</text>
+<rect x="248.50" y="91.00" width="14.00" height="10.00" rx="2" fill="#d97706" stroke="none" stroke-width="1"/>
+<text x="268.50" y="100.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">Δ 中位耗时（%）</text>
+<text x="366.32" y="146.09" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="start" font-weight="normal">R3：成功率收益见顶，耗时收益最高</text>
+<line x1="706.00" y1="462.00" x2="1106.00" y2="462.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="706.00" y1="407.00" x2="1106.00" y2="407.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="706.00" y1="352.00" x2="1106.00" y2="352.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="706.00" y1="297.00" x2="1106.00" y2="297.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="706.00" y1="242.00" x2="1106.00" y2="242.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="706.00" y1="187.00" x2="1106.00" y2="187.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="706.00" y1="132.00" x2="1106.00" y2="132.00" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="706.00" y="132.00" width="400.00" height="330.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="698.00" y="466.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">40</text>
+<text x="698.00" y="411.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">50</text>
+<text x="698.00" y="356.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">60</text>
+<text x="698.00" y="301.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">70</text>
+<text x="698.00" y="246.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">80</text>
+<text x="698.00" y="191.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">90</text>
+<text x="698.00" y="136.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="end" font-weight="normal">100</text>
+<text x="660.00" y="297.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal" transform="rotate(-90 660.00 297.00)">比例 / %</text>
+<text x="706.00" y="122.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12.5" fill="#1e293b" text-anchor="start" font-weight="bold">(b) 「能做对」与「一次就对」的差距</text>
+<path d="M 742.4 358.1 L 846.3 235.9 L 950.2 187.0 L 1054.1 156.4 L 1054.1 260.3 L 950.2 260.3 L 846.3 290.9 L 742.4 382.6 Z" fill="#fca5a5" stroke="none" stroke-width="1" opacity="0.22"/>
+<polyline points="742.36,358.11 846.26,235.89 950.16,187.00 1054.05,156.44" fill="none" stroke="#1e3a8a" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="742.36,382.56 846.26,290.89 950.16,260.33 1054.05,260.33" fill="none" stroke="#0f766e" stroke-width="2.0" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="742.36" cy="358.11" r="4" fill="#1e3a8a" stroke="none" stroke-width="1"/>
+<circle cx="742.36" cy="382.56" r="4" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="740.36" y="374.33" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#b91c1c" text-anchor="end" font-weight="normal">4</text>
+<circle cx="846.26" cy="235.89" r="4" fill="#1e3a8a" stroke="none" stroke-width="1"/>
+<circle cx="846.26" cy="290.89" r="4" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="844.26" y="267.39" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#b91c1c" text-anchor="end" font-weight="normal">10</text>
+<circle cx="950.16" cy="187.00" r="4" fill="#1e3a8a" stroke="none" stroke-width="1"/>
+<circle cx="950.16" cy="260.33" r="4" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="948.16" y="227.67" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#b91c1c" text-anchor="end" font-weight="normal">13</text>
+<circle cx="1054.05" cy="156.44" r="4" fill="#1e3a8a" stroke="none" stroke-width="1"/>
+<circle cx="1054.05" cy="260.33" r="4" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="1052.05" y="212.39" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="9.5" fill="#b91c1c" text-anchor="end" font-weight="normal">19</text>
+<text x="742.36" y="480.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">R0</text>
+<text x="846.26" y="480.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">R1</text>
+<text x="950.16" y="480.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">R2</text>
+<text x="1054.05" y="480.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">R3</text>
+<text x="1048.05" y="144.44" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#1e3a8a" text-anchor="end" font-weight="bold">96%</text>
+<text x="1048.05" y="280.33" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#0f766e" text-anchor="end" font-weight="bold">77%</text>
+<rect x="706.00" y="91.00" width="14.00" height="10.00" rx="2" fill="#1e3a8a" stroke="none" stroke-width="1"/>
+<text x="726.00" y="100.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">成功率</text>
+<rect x="773.50" y="91.00" width="14.00" height="10.00" rx="2" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="793.50" y="100.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#1e293b" text-anchor="start" font-weight="normal">一次做对率（全程未走错）</text>
+<text x="711.19" y="162.25" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#b91c1c" text-anchor="start" font-weight="normal">红字为两者之差：4 → 19 pp</text>
+<text x="46.00" y="566.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="normal">读法：R2 → R3 成功率只涨 6 pp，一次做对率 0 pp —— 第三轮买到的是速度（−36%），不是正确性；差额从 4 pp 拉到 19 pp 说明后期「能做对」越来越依赖「错了能回来」。</text>
+<text x="46.00" y="584.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="normal">这正是把「一次做对率」定为 R4 主指标的原因：再叠反馈通道收益已趋零，必须靠 L1 级物理防呆（唯一插槽 / 机械卡点）把走错的可能性直接消掉。</text>
+</svg>
+<figcaption>图 8　左：每轮投入的改动数与回报；右：成功率与「一次做对率」的差距从 4 pp 拉到 19 pp。</figcaption></figure>
+<p>成功率涨了 37 pp，一次做对率只涨 22 pp，而且 <b>R2 → R3 一步没动</b>。这不是数据出错，是三件事叠在一起：</p>
+<ul><li><b>R0 的自我纠正率只有 8%</b>，不是「那时候错得少」，而是「错了回不来」——R0 开错时系统静默，错了直接记成失败，根本没有「纠正」这个动作可数；</li><li><b>R1 打开回退通道后，自我纠正率反而升到 12%，R2 15%，R3 20%</b>——越到后期，「能做对」越依赖「错了能回来」；</li><li>所以 <b>R3 买到的是速度（中位耗时 −38%），不是正确性</b>：20% 意味着每 5 次成功里就有 1 次是「走错 → 被纠正 → 完成」。</li></ul>
+<div class="note"><b>这条结论直接改掉了 R4 的主指标。</b>成功率已到 96%，n=30 时信噪比太低，再涨也测不出来；后续改看<b>一次做对率（目标 ≥90%）</b>与<b>自我纠正率（目标 ≤10%）</b>。而这两个指标只能靠 L1 级物理防呆推进（唯一插槽、机械卡点）——再叠反馈通道的收益，R3 已经验证是 0 pp。</div>
+<h2>5　成本：把"买不起"也解决掉</h2>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="500" viewBox="0 0 1180 500">
+<rect width="1180" height="500" fill="#ffffff"/>
+<text x="46.00" y="34.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="19" fill="#1e293b" text-anchor="start" font-weight="bold">成本对比：把「买不起」这件事也解决掉</text>
+<text x="46.00" y="56.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="12" fill="#64748b" text-anchor="start" font-weight="normal">同类功能产品的市售价格（2026 年 11 月电商均价）与本方案物料成本</text>
+<line x1="380.00" y1="110.00" x2="380.00" y2="430.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="455.00" y1="110.00" x2="455.00" y2="430.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="530.00" y1="110.00" x2="530.00" y2="430.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="605.00" y1="110.00" x2="605.00" y2="430.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="680.00" y1="110.00" x2="680.00" y2="430.00" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="755.00" y1="110.00" x2="755.00" y2="430.00" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="380.00" y="110.00" width="420.00" height="320.00" rx="0" fill="none" stroke="#94a3b8" stroke-width="1"/>
+<text x="380.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">0</text>
+<text x="455.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">50</text>
+<text x="530.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">100</text>
+<text x="605.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">150</text>
+<text x="680.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">200</text>
+<text x="755.00" y="445.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#64748b" text-anchor="middle" font-weight="normal">250</text>
+<text x="590.00" y="464.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="normal">单价 / 元</text>
+<rect x="380.00" y="184.00" width="87.00" height="26.00" rx="3" fill="#0f766e" stroke="none" stroke-width="1"/>
+<text x="474.00" y="201.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#0f766e" text-anchor="start" font-weight="bold">¥58</text>
+<rect x="380.00" y="212.00" width="373.50" height="24.00" rx="3" fill="#e2e8f0" stroke="none" stroke-width="1"/>
+<text x="760.50" y="228.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="start" font-weight="normal">¥249</text>
+<text x="366.00" y="201.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="end" font-weight="bold">D1 智能药盒提醒器</text>
+<text x="366.00" y="228.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="end" font-weight="normal">商用智能药盒 ¥199~399</text>
+<rect x="380.00" y="264.00" width="78.00" height="26.00" rx="3" fill="#2563eb" stroke="none" stroke-width="1"/>
+<text x="465.00" y="281.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#2563eb" text-anchor="start" font-weight="bold">¥52</text>
+<rect x="380.00" y="292.00" width="193.50" height="24.00" rx="3" fill="#e2e8f0" stroke="none" stroke-width="1"/>
+<text x="580.50" y="308.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="start" font-weight="normal">¥129</text>
+<text x="366.00" y="281.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="end" font-weight="bold">D2 环境声提示手环</text>
+<text x="366.00" y="308.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="end" font-weight="normal">震动提示器 ¥89~159</text>
+<rect x="380.00" y="344.00" width="96.00" height="26.00" rx="3" fill="#7c3aed" stroke="none" stroke-width="1"/>
+<text x="483.00" y="361.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11" fill="#7c3aed" text-anchor="start" font-weight="bold">¥64</text>
+<rect x="380.00" y="372.00" width="148.50" height="24.00" rx="3" fill="#e2e8f0" stroke="none" stroke-width="1"/>
+<text x="535.50" y="388.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="start" font-weight="normal">¥99</text>
+<text x="366.00" y="361.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#1e293b" text-anchor="end" font-weight="bold">D3 防烫水杯引导器</text>
+<text x="366.00" y="388.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10" fill="#64748b" text-anchor="end" font-weight="normal">语音温度计 ¥69~129</text>
+<rect x="860.00" y="120.00" width="280.00" height="300.00" rx="10" fill="#f0fdfa" stroke="#99f6e4" stroke-width="1"/>
+<text x="890.00" y="152.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="15" fill="#0f766e" text-anchor="start" font-weight="bold">三台合计 ¥174</text>
+<text x="890.00" y="174.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="11.5" fill="#0f766e" text-anchor="start" font-weight="normal">不到同类商品单价的 1/3</text>
+<text x="884.00" y="206.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#134e4a" text-anchor="start" font-weight="bold">省钱的三个来源：</text>
+<text x="884.00" y="232.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#334155" text-anchor="start" font-weight="normal">① 用 ESP32-C3 替代「主板+蓝牙模块」</text>
+<text x="884.00" y="258.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#334155" text-anchor="start" font-weight="normal">② 结构件 3D 打印，不打模具</text>
+<text x="884.00" y="284.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#334155" text-anchor="start" font-weight="normal">③ 语音用预录音而非云端 TTS</text>
+<text x="884.00" y="330.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#134e4a" text-anchor="start" font-weight="bold">更关键的不是便宜，</text>
+<text x="884.00" y="348.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#134e4a" text-anchor="start" font-weight="bold">而是「不依赖 App」：</text>
+<text x="884.00" y="370.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#334155" text-anchor="start" font-weight="normal">36 人里 29 人明确拒绝</text>
+<text x="884.00" y="388.00" font-family="'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Source Han Sans SC',sans-serif" font-size="10.5" fill="#334155" text-anchor="start" font-weight="normal">需要装 App 的产品。</text>
+</svg>
+<figcaption>图 9　三台原型的物料成本与同类商品价格对比。</figcaption></figure>
+<p>省钱的三个来源：① 用 ESP32-C3 替代"开发板 + 蓝牙模块"；② 结构件 3D 打印不打模具；③ 语音用预录音而非云端 TTS。但更关键的不是便宜，而是<b>不依赖 App</b>——36 人里 29 人明确拒绝需要装 App 的产品。</p>
+<h2>6　结论与局限</h2>
+<ol><li>三种受限条件下，D1 成功率 43%~70% → <b>93%~97%</b>，统计显著（p &lt; 0.01）；</li><li>中位耗时 36.8~42.5 s → <b>11.6~13.7 s</b>，进入"日常可用"窗口；</li><li><b>单手是最难的约束</b>，也是当前机构的性能天花板（13.7 s）；</li><li>成功率超过 93% 后失去区分度，后续应以<b>耗时与自我纠正率</b>为主指标；</li><li>当前是"<b>可纠正的可用</b>"，还不是"零门槛的易用"——一次做对率停在 76.7%（R2 → R3 未提升），R3 有 20% 的成功试验中出现过一次自我纠正；</li></ol>
+<div class="note"><b>局限：</b>被试仅 8 人且多为团队亲友（熟悉度偏差）；模拟受限与真实残障差异大（真视障者有更强的听觉补偿，我们可能高估难度；但也有代偿动作，可能低估）；观察员未双盲；D2 在抽油烟机全开时误报率约 12%。</div>
+<footer>项目八　低成本智能交互辅具　·　图表为矢量 SVG，可直接放大印刷或插入 Word／PPT　·　过程数据见仓库 data/ 与 docs/</footer>
+</body></html>
